@@ -102,7 +102,7 @@ func main() {
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 	} else {
-		fmt.Printf("User ID: %d\n", robloxUserResult.Data.UserID)
+		fmt.Printf("User ID: %s\n", robloxUserResult.Data.UserID)
 		fmt.Printf("Username: %s\n", robloxUserResult.Data.Username)
 		fmt.Printf("Display Name: %s\n", robloxUserResult.Data.DisplayName)
 	}
@@ -120,11 +120,7 @@ func main() {
 				if i >= 10 {
 					break
 				}
-				status := "not found"
-				if domain.Exists {
-					status = "exists"
-				}
-				fmt.Printf("  - %s: %s\n", domain.Domain, status)
+				fmt.Printf("  - %s\n", domain)
 			}
 		} else {
 			fmt.Println("No registered services found")
