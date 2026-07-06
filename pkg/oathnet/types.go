@@ -147,26 +147,47 @@ type V2SearchMeta struct {
 }
 
 type V2StealerData struct {
-	Items      []V2StealerResult `json:"items"`
-	Meta       *V2SearchMeta     `json:"meta,omitempty"`
-	NextCursor string            `json:"next_cursor,omitempty"`
-	APIMeta    *ResponseMeta     `json:"_meta,omitempty"`
+	Items             []V2StealerResult  `json:"items"`
+	Meta              *V2SearchMeta      `json:"meta,omitempty"`
+	NextCursor        string             `json:"next_cursor,omitempty"`
+	Victims           []V2VictimResult   `json:"victims,omitempty"`
+	VictimsMeta       *V2SearchMeta      `json:"victims_meta,omitempty"`
+	VictimsNextCursor string             `json:"victims_next_cursor,omitempty"`
+	CredentialStats   *V2CredentialStats `json:"credential_stats,omitempty"`
+	APIMeta           *ResponseMeta      `json:"_meta,omitempty"`
 }
 
 type V2StealerResult struct {
-	ID           string   `json:"id,omitempty"`
-	LogID        string   `json:"log_id,omitempty"`
-	URL          string   `json:"url,omitempty"`
-	Domain       []string `json:"domain,omitempty"`
-	Subdomain    []string `json:"subdomain,omitempty"`
-	EmailDomains []string `json:"email_domains,omitempty"`
-	Path         []string `json:"path,omitempty"`
-	Username     string   `json:"username,omitempty"`
-	Password     string   `json:"password,omitempty"`
-	Email        []string `json:"email,omitempty"`
-	Log          string   `json:"log,omitempty"`
-	PwnedAt      string   `json:"pwned_at,omitempty"`
-	IndexedAt    string   `json:"indexed_at,omitempty"`
+	ID                     string   `json:"id,omitempty"`
+	LogID                  string   `json:"log_id,omitempty"`
+	URL                    string   `json:"url,omitempty"`
+	URLStr                 string   `json:"url_str,omitempty"`
+	Domain                 []string `json:"domain,omitempty"`
+	Subdomain              []string `json:"subdomain,omitempty"`
+	EmailDomains           []string `json:"email_domains,omitempty"`
+	Path                   []string `json:"path,omitempty"`
+	Username               string   `json:"username,omitempty"`
+	Password               string   `json:"password,omitempty"`
+	Email                  []string `json:"email,omitempty"`
+	Log                    string   `json:"log,omitempty"`
+	SourceType             string   `json:"source_type,omitempty"`
+	PasswordHash           string   `json:"password_hash,omitempty"`
+	ArchiveHash            string   `json:"archive_hash,omitempty"`
+	CanonicalCredentialID  string   `json:"canonical_credential_id,omitempty"`
+	InvestigationLabels    []string `json:"investigation_labels,omitempty"`
+	InvestigationLinkTypes []string `json:"investigation_link_types,omitempty"`
+	IsRelatedCredential    bool     `json:"is_related_credential,omitempty"`
+	PwnedAt                string   `json:"pwned_at,omitempty"`
+	IndexedAt              string   `json:"indexed_at,omitempty"`
+}
+
+type V2CredentialStats struct {
+	DirectTotal  int `json:"direct_total,omitempty"`
+	DirectLoaded int `json:"direct_loaded,omitempty"`
+	LinkedTotal  int `json:"linked_total,omitempty"`
+	LinkedLoaded int `json:"linked_loaded,omitempty"`
+	Total        int `json:"total,omitempty"`
+	Loaded       int `json:"loaded,omitempty"`
 }
 
 type SubdomainResponse struct {
@@ -180,6 +201,125 @@ type SubdomainData struct {
 	Count      int           `json:"count"`
 	Domain     string        `json:"domain"`
 	Meta       *ResponseMeta `json:"_meta,omitempty"`
+}
+
+// ============================================
+// V2 INVESTIGATION AND PHONEBOOK TYPES
+// ============================================
+
+type V2InvestigationSearchResponse struct {
+	Success bool                       `json:"success"`
+	Message string                     `json:"message,omitempty"`
+	Data    *V2InvestigationSearchData `json:"data,omitempty"`
+}
+
+type V2InvestigationSearchData struct {
+	Query              string                                 `json:"query,omitempty"`
+	Scope              string                                 `json:"scope,omitempty"`
+	Sections           *V2InvestigationSections               `json:"sections,omitempty"`
+	Credentials        *V2StealerData                         `json:"credentials,omitempty"`
+	Victims            *V2VictimsData                         `json:"victims,omitempty"`
+	Evidence           *V2VictimPropertiesSearchResponse      `json:"evidence,omitempty"`
+	Properties         *V2VictimPropertiesSearchResponse      `json:"properties,omitempty"`
+	Files              *V2FileMetadataSearchResponse          `json:"files,omitempty"`
+	RelatedCredentials *V2StealerData                         `json:"related_credentials,omitempty"`
+	Links              []V2InvestigationLink                  `json:"links,omitempty"`
+	Relations          []V2InvestigationRelation              `json:"relations,omitempty"`
+	SectionErrors      map[string]V2InvestigationSectionError `json:"section_errors,omitempty"`
+	Intersection       *V2InvestigationIntersection           `json:"intersection,omitempty"`
+	PolicyRedacted     bool                                   `json:"policy_redacted,omitempty"`
+	UpgradeRequired    bool                                   `json:"upgrade_required,omitempty"`
+	RedactionMarker    string                                 `json:"redaction_marker,omitempty"`
+}
+
+type V2InvestigationSections struct {
+	Credentials        *V2StealerData                    `json:"credentials,omitempty"`
+	Victims            *V2VictimsData                    `json:"victims,omitempty"`
+	Evidence           *V2VictimPropertiesSearchResponse `json:"evidence,omitempty"`
+	Files              *V2FileMetadataSearchResponse     `json:"files,omitempty"`
+	RelatedCredentials *V2StealerData                    `json:"related_credentials,omitempty"`
+}
+
+type V2InvestigationLinkEndpoint struct {
+	Section string `json:"section,omitempty"`
+	ID      string `json:"id,omitempty"`
+	LogID   string `json:"log_id,omitempty"`
+}
+
+type V2InvestigationLink struct {
+	RelationType      string                       `json:"relation_type,omitempty"`
+	DisplayLabel      string                       `json:"display_label,omitempty"`
+	LogID             string                       `json:"log_id,omitempty"`
+	Source            *V2InvestigationLinkEndpoint `json:"source,omitempty"`
+	Target            *V2InvestigationLinkEndpoint `json:"target,omitempty"`
+	MatchedField      string                       `json:"matched_field,omitempty"`
+	MatchedValueLabel string                       `json:"matched_value_label,omitempty"`
+	CredentialID      string                       `json:"credential_id,omitempty"`
+	PropertyID        string                       `json:"property_id,omitempty"`
+	FileID            string                       `json:"file_id,omitempty"`
+	Confidence        float64                      `json:"confidence,omitempty"`
+	Reason            string                       `json:"reason,omitempty"`
+}
+
+type V2InvestigationRelation struct {
+	Type         string `json:"type,omitempty"`
+	LogID        string `json:"log_id,omitempty"`
+	CredentialID string `json:"credential_id,omitempty"`
+	PropertyID   string `json:"property_id,omitempty"`
+	FileID       string `json:"file_id,omitempty"`
+	Reason       string `json:"reason,omitempty"`
+	Evidence     string `json:"evidence,omitempty"`
+}
+
+type V2InvestigationSectionError struct {
+	Section string `json:"section,omitempty"`
+	Error   string `json:"error,omitempty"`
+	Code    string `json:"code,omitempty"`
+	Reason  string `json:"reason,omitempty"`
+}
+
+type V2InvestigationIntersection struct {
+	Mode         string         `json:"mode,omitempty"`
+	Applied      bool           `json:"applied,omitempty"`
+	Constraints  map[string]int `json:"constraints,omitempty"`
+	CandidateCap int            `json:"candidate_cap,omitempty"`
+	Truncated    bool           `json:"truncated,omitempty"`
+}
+
+type V2PhonebookResponse struct {
+	Domain                 string                        `json:"domain,omitempty"`
+	Subdomains             []string                      `json:"subdomains,omitempty"`
+	SubdomainResults       []V2PhonebookSubdomainInsight `json:"subdomain_results,omitempty"`
+	Emails                 []V2PhonebookEmailInsight     `json:"emails,omitempty"`
+	Count                  int                           `json:"count,omitempty"`
+	EmailCount             int                           `json:"email_count,omitempty"`
+	PolicyRedacted         bool                          `json:"policy_redacted,omitempty"`
+	UpgradeRequired        bool                          `json:"upgrade_required,omitempty"`
+	RedactionMarker        string                        `json:"redaction_marker,omitempty"`
+	Message                string                        `json:"message,omitempty"`
+	VisibleSubdomainLimit  *int                          `json:"visible_subdomain_limit,omitempty"`
+	VisibleEmailLimit      *int                          `json:"visible_email_limit,omitempty"`
+	RedactedSubdomainCount int                           `json:"redacted_subdomain_count,omitempty"`
+	RedactedEmailCount     int                           `json:"redacted_email_count,omitempty"`
+}
+
+type V2PhonebookSubdomainInsight struct {
+	Domain          string `json:"domain,omitempty"`
+	Count           int    `json:"count,omitempty"`
+	LatestPwnedAt   string `json:"latest_pwned_at,omitempty"`
+	LatestIndexedAt string `json:"latest_indexed_at,omitempty"`
+	Redacted        bool   `json:"redacted,omitempty"`
+}
+
+type V2PhonebookEmailInsight struct {
+	Email             string `json:"email,omitempty"`
+	Count             int    `json:"count,omitempty"`
+	StealerCount      int    `json:"stealer_count,omitempty"`
+	BreachResultCount int    `json:"breach_result_count,omitempty"`
+	BreachCount       int    `json:"breach_count,omitempty"`
+	LatestPwnedAt     string `json:"latest_pwned_at,omitempty"`
+	LatestIndexedAt   string `json:"latest_indexed_at,omitempty"`
+	Redacted          bool   `json:"redacted,omitempty"`
 }
 
 // ============================================
@@ -300,15 +440,32 @@ type V2VictimsData struct {
 }
 
 type V2VictimResult struct {
-	LogID        string   `json:"log_id,omitempty"`
-	DeviceUsers  []string `json:"device_users,omitempty"`
-	HWIDs        []string `json:"hwids,omitempty"`
-	DeviceIPs    []string `json:"device_ips,omitempty"`
-	DeviceEmails []string `json:"device_emails,omitempty"`
-	DiscordIDs   []string `json:"discord_ids,omitempty"`
-	TotalDocs    int      `json:"total_docs,omitempty"`
-	PwnedAt      string   `json:"pwned_at,omitempty"`
-	IndexedAt    string   `json:"indexed_at,omitempty"`
+	LogID         string   `json:"log_id,omitempty"`
+	DeviceUsers   []string `json:"device_users,omitempty"`
+	HWIDs         []string `json:"hwids,omitempty"`
+	DeviceIPs     []string `json:"device_ips,omitempty"`
+	DeviceEmails  []string `json:"device_emails,omitempty"`
+	DiscordIDs    []string `json:"discord_ids,omitempty"`
+	TotalDocs     int      `json:"total_docs,omitempty"`
+	PwnedAt       string   `json:"pwned_at,omitempty"`
+	IndexedAt     string   `json:"indexed_at,omitempty"`
+	PhoneNumbers  []string `json:"phone_numbers,omitempty"`
+	SteamIDs      []string `json:"steam_ids,omitempty"`
+	SteamNames    []string `json:"steam_names,omitempty"`
+	Services      []string `json:"services,omitempty"`
+	ServiceCount  int      `json:"service_count,omitempty"`
+	IdentityState string   `json:"identity_state,omitempty"`
+	DeviceOS      string   `json:"device_os,omitempty"`
+	DeviceCountry string   `json:"device_country,omitempty"`
+	DeviceCity    string   `json:"device_city,omitempty"`
+	InfectionPath string   `json:"infection_path,omitempty"`
+	Antivirus     []string `json:"antivirus,omitempty"`
+	Domains       []string `json:"domains,omitempty"`
+	Subdomains    []string `json:"subdomains,omitempty"`
+	EmailDomains  []string `json:"email_domains,omitempty"`
+	VictimIP      string   `json:"victim_ip,omitempty"`
+	GeoCountry    string   `json:"geo_country,omitempty"`
+	GeoCity       string   `json:"geo_city,omitempty"`
 }
 
 // VictimManifestData represents the file tree for a victim log.
@@ -326,6 +483,56 @@ type VictimManifestNode struct {
 	Type      string               `json:"type"` // "file" or "directory"
 	SizeBytes int64                `json:"size_bytes,omitempty"`
 	Children  []VictimManifestNode `json:"children,omitempty"`
+}
+
+type V2FileMetadataSearchResponse struct {
+	Items           []V2FileMetadataResult `json:"items"`
+	Meta            *V2SearchMeta          `json:"meta,omitempty"`
+	NextCursor      string                 `json:"next_cursor,omitempty"`
+	PolicyRedacted  bool                   `json:"policy_redacted,omitempty"`
+	UpgradeRequired bool                   `json:"upgrade_required,omitempty"`
+	RedactionMarker string                 `json:"redaction_marker,omitempty"`
+}
+
+type V2FileMetadataResult struct {
+	LogID     string `json:"log_id,omitempty"`
+	FileID    string `json:"file_id,omitempty"`
+	Name      string `json:"name,omitempty"`
+	Folder    string `json:"folder,omitempty"`
+	Path      string `json:"path,omitempty"`
+	Ext       string `json:"ext,omitempty"`
+	Kind      string `json:"kind,omitempty"`
+	SizeBytes int64  `json:"size_bytes,omitempty"`
+}
+
+type V2VictimPropertiesSearchResponse struct {
+	Items           []V2VictimPropertyResult `json:"items"`
+	Meta            *V2SearchMeta            `json:"meta,omitempty"`
+	NextCursor      string                   `json:"next_cursor,omitempty"`
+	PolicyRedacted  bool                     `json:"policy_redacted,omitempty"`
+	UpgradeRequired bool                     `json:"upgrade_required,omitempty"`
+	RedactionMarker string                   `json:"redaction_marker,omitempty"`
+}
+
+type V2VictimPropertyResult struct {
+	LogID           string  `json:"log_id,omitempty"`
+	PropertyID      string  `json:"property_id,omitempty"`
+	PropertyType    string  `json:"property_type,omitempty"`
+	Service         string  `json:"service,omitempty"`
+	IdentityKind    string  `json:"identity_kind,omitempty"`
+	AccountID       string  `json:"account_id,omitempty"`
+	Username        string  `json:"username,omitempty"`
+	DisplayName     string  `json:"display_name,omitempty"`
+	Value           string  `json:"value,omitempty"`
+	Domain          string  `json:"domain,omitempty"`
+	Active          bool    `json:"active,omitempty"`
+	SourceType      string  `json:"source_type,omitempty"`
+	SourcePath      string  `json:"source_path,omitempty"`
+	SourceFileID    string  `json:"source_file_id,omitempty"`
+	Confidence      float64 `json:"confidence,omitempty"`
+	ConfidenceLabel string  `json:"confidence_label,omitempty"`
+	ConfidenceScore float64 `json:"confidence_score,omitempty"`
+	IndexedAt       string  `json:"indexed_at,omitempty"`
 }
 
 // ============================================
