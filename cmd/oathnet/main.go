@@ -269,8 +269,11 @@ var searchInitCmd = &cobra.Command{
 	Short: "Initialize a search session",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		query, _ := cmd.Flags().GetString("query")
+		searchType, _ := cmd.Flags().GetString("search-type")
 
-		result, err := client.Search.InitSession(query)
+		result, err := client.Search.InitSession(query, &oathnet.SearchSessionOptions{
+			SearchType: searchType,
+		})
 		if err != nil {
 			return err
 		}
@@ -300,6 +303,7 @@ func init() {
 	searchStealerCmd.MarkFlagRequired("query")
 
 	searchInitCmd.Flags().StringP("query", "q", "", "Search query (required)")
+	searchInitCmd.Flags().String("search-type", "", "Optional query type hint")
 	searchInitCmd.MarkFlagRequired("query")
 
 	searchCmd.AddCommand(searchBreachCmd)

@@ -46,15 +46,20 @@ type SearchSessionResponse struct {
 }
 
 type SearchSessionData struct {
-	Session *SearchSession     `json:"session"`
-	User    *SearchSessionUser `json:"user,omitempty"`
+	Session  *SearchSession                  `json:"session"`
+	User     *SearchSessionUser              `json:"user,omitempty"`
+	Services map[string]SearchSessionService `json:"services,omitempty"`
+	Summary  *SearchSessionSummary           `json:"summary,omitempty"`
 }
 
 type SearchSession struct {
-	ID         string `json:"id"`
-	Query      string `json:"query"`
-	SearchType string `json:"search_type"`
-	ExpiresAt  string `json:"expires_at"`
+	ID              string `json:"id"`
+	Query           string `json:"query"`
+	SearchType      string `json:"search_type,omitempty"`
+	Status          string `json:"status,omitempty"`
+	CreatedAt       string `json:"created_at,omitempty"`
+	ExpiresAt       string `json:"expires_at,omitempty"`
+	DurationMinutes int    `json:"duration_minutes,omitempty"`
 }
 
 type SearchSessionUser struct {
@@ -69,6 +74,23 @@ type DailyLookups struct {
 	Remaining   int  `json:"remaining"`
 	Limit       int  `json:"limit"`
 	IsUnlimited bool `json:"is_unlimited"`
+}
+
+type SearchSessionService struct {
+	Name             string `json:"name,omitempty"`
+	ServiceID        string `json:"service_id,omitempty"`
+	Category         string `json:"category,omitempty"`
+	IsAvailable      bool   `json:"is_available,omitempty"`
+	IsPremium        bool   `json:"is_premium,omitempty"`
+	SessionQuota     int    `json:"session_quota,omitempty"`
+	TodayUsage       int    `json:"today_usage,omitempty"`
+	RecommendedQuota int    `json:"recommended_quota,omitempty"`
+}
+
+type SearchSessionSummary struct {
+	TotalServices           int `json:"total_services,omitempty"`
+	AvailableServices       int `json:"available_services,omitempty"`
+	SessionExpiresInMinutes int `json:"session_expires_in_minutes,omitempty"`
 }
 
 type BreachSearchResponse struct {

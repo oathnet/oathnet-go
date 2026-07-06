@@ -14,10 +14,18 @@ type SearchOptions struct {
 	SearchID string
 }
 
+// SearchSessionOptions contains options for creating a search session.
+type SearchSessionOptions struct {
+	SearchType string
+}
+
 // InitSession initializes a search session.
-func (s *SearchService) InitSession(query string) (*SearchSessionResponse, error) {
+func (s *SearchService) InitSession(query string, opts ...*SearchSessionOptions) (*SearchSessionResponse, error) {
 	body := map[string]interface{}{
 		"query": query,
+	}
+	if len(opts) > 0 && opts[0] != nil && opts[0].SearchType != "" {
+		body["search_type"] = opts[0].SearchType
 	}
 
 	var resp SearchSessionResponse
