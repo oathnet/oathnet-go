@@ -28,6 +28,7 @@ type Client struct {
 	Bulk       *BulkService
 	Utility    *UtilityService
 	Scanners   *ScannerService
+	AI         *AIService
 }
 
 // ClientOption is a function that configures the client.
@@ -76,6 +77,7 @@ func NewClient(apiKey string, opts ...ClientOption) (*Client, error) {
 	c.Bulk = &BulkService{client: c}
 	c.Utility = &UtilityService{client: c}
 	c.Scanners = &ScannerService{client: c}
+	c.AI = &AIService{client: c}
 
 	return c, nil
 }

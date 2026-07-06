@@ -93,6 +93,7 @@ export OATHNET_API_KEY=your-api-key
 - **V2 Victims**: Search victim profiles with device info
 - **V2 File Search**: Regex search within victim files
 - **V2 Exports**: Export results to CSV/JSONL
+- **V2 AI Filters**: Translate natural language into reusable structured filters
 
 ### OSINT Lookups
 - Discord (user info, username history, linked Roblox)
@@ -196,6 +197,19 @@ result, err := client.Stealer.Search("query", &oathnet.StealerSearchOptions{
 
 // Extract subdomains from stealer data
 subs, err := client.Stealer.Subdomain("example.com", "")
+```
+
+#### V2 AI Filters
+
+```go
+// Create a structured filter from natural language
+filter, err := client.AI.Create(oathnet.V2AIFilterRequest{
+    Query: "French users over 30",
+    Index: oathnet.AIFilterIndexBreach,
+})
+
+// Fetch the transient filter context
+context, err := client.AI.GetContext(filter.FilterID)
 ```
 
 #### V2 Victims
@@ -401,6 +415,7 @@ pkg/oathnet/
   filesearch_test.go      # File search tests
   exports_test.go         # Export tests
   utility_test.go         # Utility tests
+  ai_test.go              # AI filter tests
 ```
 
 ## License
