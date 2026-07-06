@@ -93,6 +93,12 @@ func TestClientServices(t *testing.T) {
 			t.Error("Expected Utility service to be non-nil")
 		}
 	})
+
+	t.Run("has Scanners service", func(t *testing.T) {
+		if client.Scanners == nil {
+			t.Error("Expected Scanners service to be non-nil")
+		}
+	})
 }
 
 func TestClientIntegration(t *testing.T) {

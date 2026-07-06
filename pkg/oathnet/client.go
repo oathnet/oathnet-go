@@ -26,6 +26,7 @@ type Client struct {
 	Exports    *ExportsService
 	Bulk       *BulkService
 	Utility    *UtilityService
+	Scanners   *ScannerService
 }
 
 // ClientOption is a function that configures the client.
@@ -72,6 +73,7 @@ func NewClient(apiKey string, opts ...ClientOption) (*Client, error) {
 	c.Exports = &ExportsService{client: c}
 	c.Bulk = &BulkService{client: c}
 	c.Utility = &UtilityService{client: c}
+	c.Scanners = &ScannerService{client: c}
 
 	return c, nil
 }
@@ -128,6 +130,53 @@ func (c *Client) post(path string, body interface{}, result interface{}) error {
 	return c.handleResponse(resp, result)
 }
 
+// patch performs a PATCH request.
+func (c *Client) patch(path string, body interface{}, result interface{}) error {
+	var bodyReader io.Reader
+	if body != nil {
+		jsonBody, err := json.Marshal(body)
+		if err != nil {
+			return err
+		}
+		bodyReader = bytes.NewReader(jsonBody)
+	}
+
+	req, err := http.NewRequest("PATCH", c.baseURL+path, bodyReader)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("x-api-key", c.apiKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return c.handleResponse(resp, result)
+}
+
+// delete performs a DELETE request.
+func (c *Client) delete(path string, result interface{}) error {
+	req, err := http.NewRequest("DELETE", c.baseURL+path, nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("x-api-key", c.apiKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return c.handleResponse(resp, result)
+}
+
 // getRaw performs a GET request and returns raw bytes.
 func (c *Client) getRaw(path string) ([]byte, error) {
 	req, err := http.NewRequest("GET", c.baseURL+path, nil)
@@ -161,7 +210,7 @@ func (c *Client) handleResponse(resp *http.Response, result interface{}) error {
 		return c.parseError(resp.StatusCode, body)
 	}
 
-	if result != nil {
+	if result != nil && len(body) > 0 {
 		return json.Unmarshal(body, result)
 	}
 
