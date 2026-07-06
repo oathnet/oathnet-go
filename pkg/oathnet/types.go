@@ -143,6 +143,7 @@ type V2SearchMeta struct {
 	HasMore    bool    `json:"has_more,omitempty"`
 	TotalPages int     `json:"total_pages,omitempty"`
 	MaxScore   float64 `json:"max_score,omitempty"`
+	FilterID   string  `json:"filter_id,omitempty"`
 }
 
 type V2StealerData struct {
@@ -179,6 +180,106 @@ type SubdomainData struct {
 	Count      int           `json:"count"`
 	Domain     string        `json:"domain"`
 	Meta       *ResponseMeta `json:"_meta,omitempty"`
+}
+
+// ============================================
+// V2 BREACH TYPES
+// ============================================
+
+type V2BreachSearchResponse struct {
+	Success bool                `json:"success"`
+	Message string              `json:"message,omitempty"`
+	Data    *V2BreachSearchData `json:"data,omitempty"`
+}
+
+type V2BreachSearchData struct {
+	Items      []V2BreachResult          `json:"items"`
+	Meta       *V2SearchMeta             `json:"meta,omitempty"`
+	DBNameInfo map[string]V2LeakMetadata `json:"dbname_info,omitempty"`
+	NextCursor string                    `json:"next_cursor,omitempty"`
+	APIMeta    map[string]interface{}    `json:"_meta,omitempty"`
+}
+
+type V2BreachResult struct {
+	ID            string                 `json:"id,omitempty"`
+	Email         string                 `json:"email,omitempty"`
+	EmailDomain   string                 `json:"email_domain,omitempty"`
+	Username      string                 `json:"username,omitempty"`
+	Password      string                 `json:"password,omitempty"`
+	PasswordHash  string                 `json:"password_hash,omitempty"`
+	Salt          string                 `json:"salt,omitempty"`
+	FullName      string                 `json:"full_name,omitempty"`
+	FirstName     string                 `json:"first_name,omitempty"`
+	LastName      string                 `json:"last_name,omitempty"`
+	MiddleName    string                 `json:"middle_name,omitempty"`
+	DisplayName   string                 `json:"display_name,omitempty"`
+	PhoneNumber   string                 `json:"phone_number,omitempty"`
+	PhoneNational string                 `json:"phone_national,omitempty"`
+	AddressStreet string                 `json:"address_street,omitempty"`
+	City          string                 `json:"city,omitempty"`
+	State         string                 `json:"state,omitempty"`
+	PostalCode    string                 `json:"postal_code,omitempty"`
+	Country       string                 `json:"country,omitempty"`
+	DateBirth     string                 `json:"date_birth,omitempty"`
+	Age           int                    `json:"age,omitempty"`
+	CreatedAt     string                 `json:"created_at,omitempty"`
+	LastLogin     string                 `json:"last_login,omitempty"`
+	IndexedAt     string                 `json:"indexed_at,omitempty"`
+	IP            string                 `json:"ip,omitempty"`
+	DiscordID     string                 `json:"discordid,omitempty"`
+	Instagram     string                 `json:"instagram,omitempty"`
+	LinkedIn      string                 `json:"linkedin,omitempty"`
+	IBAN          string                 `json:"iban,omitempty"`
+	SSN           string                 `json:"ssn,omitempty"`
+	DBName        string                 `json:"dbname,omitempty"`
+	Gender        string                 `json:"gender,omitempty"`
+	Language      string                 `json:"language,omitempty"`
+	Bio           string                 `json:"bio,omitempty"`
+	Location      string                 `json:"location,omitempty"`
+	Extra         map[string]interface{} `json:"extra,omitempty"`
+}
+
+type V2LeakMetadata struct {
+	Title       string `json:"Title,omitempty"`
+	Domain      string `json:"Domain,omitempty"`
+	BreachDate  string `json:"BreachDate,omitempty"`
+	PwnCount    int    `json:"PwnCount,omitempty"`
+	Description string `json:"Description,omitempty"`
+}
+
+type V2AutocompleteValueResponse struct {
+	Items  []V2AutocompleteValueItem `json:"items"`
+	TookMs int                       `json:"took_ms,omitempty"`
+}
+
+type V2AutocompleteValueItem struct {
+	Field string `json:"field,omitempty"`
+	Value string `json:"value,omitempty"`
+	Count int    `json:"count,omitempty"`
+}
+
+type V2AutocompleteDBNamesResponse struct {
+	Items  []V2AutocompleteDBNameItem `json:"items"`
+	TookMs int                        `json:"took_ms,omitempty"`
+}
+
+type V2AutocompleteDBNameItem struct {
+	Name   string          `json:"name,omitempty"`
+	Count  int             `json:"count,omitempty"`
+	Fields []string        `json:"fields,omitempty"`
+	Info   *V2LeakMetadata `json:"info,omitempty"`
+}
+
+type V2AutocompleteFieldsResponse struct {
+	Field  string                    `json:"field,omitempty"`
+	Items  []V2AutocompleteFieldItem `json:"items"`
+	Total  int                       `json:"total,omitempty"`
+	TookMs int                       `json:"took_ms,omitempty"`
+}
+
+type V2AutocompleteFieldItem struct {
+	DBName string `json:"dbname,omitempty"`
+	Count  int    `json:"count,omitempty"`
 }
 
 // ============================================
@@ -241,18 +342,18 @@ type FileSearchJobResponse struct {
 // FileSearchJobData represents file search job status.
 // Note: API returns this unwrapped (no success/data wrapper).
 type FileSearchJobData struct {
-	JobID           string               `json:"job_id,omitempty"`
-	Status          string               `json:"status,omitempty"` // queued, running, completed, canceled
-	CreatedAt       string               `json:"created_at,omitempty"`
-	StartedAt       string               `json:"started_at,omitempty"`
-	CompletedAt     string               `json:"completed_at,omitempty"`
-	ExpiresAt       string               `json:"expires_at,omitempty"`
-	NextPollAfterMs int                  `json:"next_poll_after_ms,omitempty"`
-	Progress        *FileSearchProgress  `json:"progress,omitempty"`
-	Summary         *FileSearchSummary   `json:"summary,omitempty"`
-	Limits          *FileSearchLimits    `json:"limits,omitempty"`
-	Matches         []FileSearchMatch    `json:"matches,omitempty"`
-	APIMeta         *ResponseMeta        `json:"_meta,omitempty"`
+	JobID           string              `json:"job_id,omitempty"`
+	Status          string              `json:"status,omitempty"` // queued, running, completed, canceled
+	CreatedAt       string              `json:"created_at,omitempty"`
+	StartedAt       string              `json:"started_at,omitempty"`
+	CompletedAt     string              `json:"completed_at,omitempty"`
+	ExpiresAt       string              `json:"expires_at,omitempty"`
+	NextPollAfterMs int                 `json:"next_poll_after_ms,omitempty"`
+	Progress        *FileSearchProgress `json:"progress,omitempty"`
+	Summary         *FileSearchSummary  `json:"summary,omitempty"`
+	Limits          *FileSearchLimits   `json:"limits,omitempty"`
+	Matches         []FileSearchMatch   `json:"matches,omitempty"`
+	APIMeta         *ResponseMeta       `json:"_meta,omitempty"`
 }
 
 type FileSearchProgress struct {
@@ -458,9 +559,9 @@ type DiscordUsernameHistoryResponse struct {
 }
 
 type DiscordUsernameHistoryData struct {
-	UserID  string                       `json:"user_id"`
+	UserID  string                        `json:"user_id"`
 	History []DiscordUsernameHistoryEntry `json:"history"`
-	Meta    *ResponseMeta                `json:"_meta,omitempty"`
+	Meta    *ResponseMeta                 `json:"_meta,omitempty"`
 }
 
 type DiscordUsernameHistoryEntry struct {
@@ -518,10 +619,10 @@ type GHuntResponse struct {
 }
 
 type GHuntData struct {
-	Email   string         `json:"email"`
-	Found   bool           `json:"found"`
-	Profile *GHuntProfile  `json:"profile,omitempty"`
-	Meta    *ResponseMeta  `json:"_meta,omitempty"`
+	Email   string        `json:"email"`
+	Found   bool          `json:"found"`
+	Profile *GHuntProfile `json:"profile,omitempty"`
+	Meta    *ResponseMeta `json:"_meta,omitempty"`
 }
 
 type GHuntProfile struct {
@@ -553,10 +654,10 @@ type MinecraftHistoryResponse struct {
 }
 
 type MinecraftHistoryData struct {
-	UUID     string                   `json:"uuid,omitempty"`
-	Username string                   `json:"username"`
-	History  []MinecraftHistoryEntry  `json:"history"`
-	Meta     *ResponseMeta            `json:"_meta,omitempty"`
+	UUID     string                  `json:"uuid,omitempty"`
+	Username string                  `json:"username"`
+	History  []MinecraftHistoryEntry `json:"history"`
+	Meta     *ResponseMeta           `json:"_meta,omitempty"`
 }
 
 type MinecraftHistoryEntry struct {

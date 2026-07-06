@@ -20,6 +20,7 @@ type Client struct {
 	// Services
 	Search     *SearchService
 	OSINT      *OSINTService
+	Breach     *BreachV2Service
 	Stealer    *StealerV2Service
 	Victims    *VictimsService
 	FileSearch *FileSearchService
@@ -67,6 +68,7 @@ func NewClient(apiKey string, opts ...ClientOption) (*Client, error) {
 	// Initialize services
 	c.Search = &SearchService{client: c}
 	c.OSINT = &OSINTService{client: c}
+	c.Breach = &BreachV2Service{client: c}
 	c.Stealer = &StealerV2Service{client: c}
 	c.Victims = &VictimsService{client: c}
 	c.FileSearch = &FileSearchService{client: c}
