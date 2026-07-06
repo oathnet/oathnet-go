@@ -122,6 +122,141 @@ func TestStealerV2Service_SearchPostRequestConstruction(t *testing.T) {
 	}
 }
 
+func TestVictimsService_SearchRequestConstruction(t *testing.T) {
+	var gotMethod string
+	var gotPath string
+	var gotQuery url.Values
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotMethod = r.Method
+		gotPath = r.URL.EscapedPath()
+		gotQuery = r.URL.Query()
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{
+			"success": true,
+			"data": {
+				"items": [{
+					"log_id": "victim-1",
+					"device_users": ["alice"],
+					"device_ips": ["192.0.2.10"],
+					"discord_ids": ["1234567890"],
+					"total_docs": 12,
+					"services": ["discord"],
+					"service_count": 1,
+					"device_country": "US"
+				}],
+				"meta": {"total": 1, "count": 1, "took_ms": 8, "filter_id": "0123456789abcdef01234567"},
+				"next_cursor": "next-victim"
+			}
+		}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient("test-key", WithBaseURL(server.URL))
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+
+	resp, err := client.Victims.Search("example.com", &VictimsSearchOptions{
+		Cursor:          "victim cursor",
+		PageSize:        50,
+		Sort:            "-indexed_at",
+		From:            "2026-01-01T00:00:00Z",
+		To:              "2026-01-31T00:00:00Z",
+		DateField:       "indexed_at",
+		Wildcard:        true,
+		LogID:           "log-123",
+		Filter:          map[string]interface{}{"field": "service", "operator": "eq", "value": "discord"},
+		FilterID:        "0123456789abcdef01234567",
+		TotalDocsMin:    2,
+		TotalDocsMax:    20,
+		ServiceCountMin: 1,
+		ServiceCountMax: 8,
+		Emails:          []string{"alice@example.com"},
+		EmailDomains:    []string{"example.com"},
+		IPs:             []string{"203.0.113.11"},
+		HWIDs:           []string{"hwid-1"},
+		DiscordIDs:      []string{"1234567890"},
+		Usernames:       []string{"alice"},
+		Countries:       []string{"US"},
+		Cities:          []string{"New York"},
+		OSes:            []string{"Windows"},
+		Services:        []string{"discord"},
+		SteamIDs:        []string{"steam-1"},
+		SteamNames:      []string{"AliceSteam"},
+		Phones:          []string{"+15551234567"},
+		Domains:         []string{"example.com"},
+		Subdomains:      []string{"accounts.example.com"},
+		IdentityStates:  []string{"active"},
+		VictimIPs:       []string{"198.51.100.4"},
+		Antivirus:       []string{"defender"},
+		InfectionPaths:  []string{"C:/Users/Alice"},
+		Fields:          []string{"log_id", "device_users"},
+		View:            "enriched",
+		SearchID:        "session-123",
+	})
+	if err != nil {
+		t.Fatalf("Search() error = %v", err)
+	}
+
+	if gotMethod != http.MethodGet {
+		t.Fatalf("method = %s, want GET", gotMethod)
+	}
+	if gotPath != "/service/v2/victims/search" {
+		t.Fatalf("path = %s, want /service/v2/victims/search", gotPath)
+	}
+	wantQuery := url.Values{
+		"q":                 {"example.com"},
+		"cursor":            {"victim cursor"},
+		"page_size":         {"50"},
+		"sort":              {"-indexed_at"},
+		"from":              {"2026-01-01T00:00:00Z"},
+		"to":                {"2026-01-31T00:00:00Z"},
+		"date_field":        {"indexed_at"},
+		"wildcard":          {"true"},
+		"log_id":            {"log-123"},
+		"filter":            {`{"field":"service","operator":"eq","value":"discord"}`},
+		"filter_id":         {"0123456789abcdef01234567"},
+		"total_docs_min":    {"2"},
+		"total_docs_max":    {"20"},
+		"service_count_min": {"1"},
+		"service_count_max": {"8"},
+		"email[]":           {"alice@example.com"},
+		"email_domain[]":    {"example.com"},
+		"ip[]":              {"203.0.113.11"},
+		"hwid[]":            {"hwid-1"},
+		"discord_id[]":      {"1234567890"},
+		"username[]":        {"alice"},
+		"country[]":         {"US"},
+		"city[]":            {"New York"},
+		"os[]":              {"Windows"},
+		"service[]":         {"discord"},
+		"steam_id[]":        {"steam-1"},
+		"steam_name[]":      {"AliceSteam"},
+		"phone[]":           {"+15551234567"},
+		"domain[]":          {"example.com"},
+		"subdomain[]":       {"accounts.example.com"},
+		"identity_state[]":  {"active"},
+		"victim_ip[]":       {"198.51.100.4"},
+		"antivirus[]":       {"defender"},
+		"infection_path[]":  {"C:/Users/Alice"},
+		"fields[]":          {"log_id", "device_users"},
+		"view":              {"enriched"},
+		"search_id":         {"session-123"},
+	}
+	if !reflect.DeepEqual(gotQuery, wantQuery) {
+		t.Fatalf("query = %#v, want %#v", gotQuery, wantQuery)
+	}
+	if resp == nil || !resp.Success || resp.Data == nil || resp.Data.NextCursor != "next-victim" {
+		t.Fatalf("unexpected response: %#v", resp)
+	}
+	if len(resp.Data.Items) != 1 || resp.Data.Items[0].LogID != "victim-1" || resp.Data.Items[0].DeviceCountry != "US" {
+		t.Fatalf("unexpected items: %#v", resp.Data.Items)
+	}
+}
+
 func TestVictimsService_SearchPostRequestConstruction(t *testing.T) {
 	var gotMethod string
 	var gotPath string
