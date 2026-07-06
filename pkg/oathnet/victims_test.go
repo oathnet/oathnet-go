@@ -1,6 +1,13 @@
 package oathnet
 
 import (
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"os"
+	"path/filepath"
+	"reflect"
 	"testing"
 )
 
@@ -169,5 +176,130 @@ func findFile(node *VictimManifestNode, fileID *string) {
 	}
 	for _, child := range node.Children {
 		findFile(&child, fileID)
+	}
+}
+
+func TestVictimsService_RawDetailRequestConstruction(t *testing.T) {
+	tests := []struct {
+		name         string
+		call         func(*Client) error
+		responseBody string
+		contentType  string
+		wantPath     string
+		wantQuery    url.Values
+	}{
+		{
+			name: "GetVictimManifestV2 escapes log ID and sends search_id",
+			call: func(client *Client) error {
+				resp, err := client.Victims.GetVictimManifestV2("log/with space", &VictimRawOptions{
+					SearchID: "session-123",
+				})
+				if err != nil {
+					return err
+				}
+				if resp == nil || resp.LogID != "log/with space" {
+					t.Fatalf("unexpected manifest response: %#v", resp)
+				}
+				return nil
+			},
+			responseBody: `{"log_id":"log/with space","victim_tree":{"id":"root","name":"root","type":"directory"}}`,
+			contentType:  "application/json",
+			wantPath:     "/service/v2/victims/log%2Fwith%20space",
+			wantQuery:    url.Values{"search_id": []string{"session-123"}},
+		},
+		{
+			name: "GetVictimFileV2 escapes log and file IDs",
+			call: func(client *Client) error {
+				data, err := client.Victims.GetVictimFileV2(
+					"log/with space",
+					"Browser Passwords/file 1.txt",
+					&VictimRawOptions{SearchID: "session-123"},
+				)
+				if err != nil {
+					return err
+				}
+				if string(data) != "raw file content" {
+					t.Fatalf("file content = %q", string(data))
+				}
+				return nil
+			},
+			responseBody: "raw file content",
+			contentType:  "text/plain",
+			wantPath:     "/service/v2/victims/log%2Fwith%20space/files/Browser%20Passwords%2Ffile%201.txt",
+			wantQuery:    url.Values{"search_id": []string{"session-123"}},
+		},
+		{
+			name: "DownloadVictimArchiveV2 returns bytes and DownloadArchive writes file",
+			call: func(client *Client) error {
+				data, err := client.Victims.DownloadVictimArchiveV2(
+					"log/with space",
+					&VictimRawOptions{SearchID: "session-123"},
+				)
+				if err != nil {
+					return err
+				}
+				if string(data) != "zip bytes" {
+					t.Fatalf("archive bytes = %q", string(data))
+				}
+				outputPath := filepath.Join(t.TempDir(), "victim.zip")
+				err = client.Victims.DownloadArchive(
+					"log/with space",
+					outputPath,
+					&VictimRawOptions{SearchID: "session-123"},
+				)
+				if err != nil {
+					return err
+				}
+				saved, err := os.ReadFile(outputPath)
+				if err != nil {
+					return err
+				}
+				if string(saved) != string(data) {
+					t.Fatalf("saved archive = %q, want %q", string(saved), string(data))
+				}
+				return nil
+			},
+			responseBody: "zip bytes",
+			contentType:  "application/zip",
+			wantPath:     "/service/v2/victims/log%2Fwith%20space/archive",
+			wantQuery:    url.Values{"search_id": []string{"session-123"}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var gotPath string
+			var gotQuery url.Values
+			var gotAPIKey string
+
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				gotPath = r.URL.EscapedPath()
+				gotQuery = r.URL.Query()
+				gotAPIKey = r.Header.Get("x-api-key")
+				_, _ = io.ReadAll(r.Body)
+				w.Header().Set("Content-Type", tt.contentType)
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte(tt.responseBody))
+			}))
+			defer server.Close()
+
+			client, err := NewClient("test-key", WithBaseURL(server.URL))
+			if err != nil {
+				t.Fatalf("NewClient() error = %v", err)
+			}
+
+			if err := tt.call(client); err != nil {
+				t.Fatalf("victims call error = %v", err)
+			}
+			if gotAPIKey != "test-key" {
+				t.Fatalf("x-api-key = %q, want test-key", gotAPIKey)
+			}
+			if gotPath != tt.wantPath {
+				t.Fatalf("path = %s, want %s", gotPath, tt.wantPath)
+			}
+			if !reflect.DeepEqual(gotQuery, tt.wantQuery) {
+				t.Fatalf("query = %v, want %v", gotQuery, tt.wantQuery)
+			}
+		})
 	}
 }

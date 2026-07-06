@@ -145,6 +145,11 @@ type VictimCookieDomainOptions struct {
 	SearchID string
 }
 
+// VictimRawOptions contains query options for raw/detail victim endpoints.
+type VictimRawOptions struct {
+	SearchID string
+}
+
 // Search searches victim profiles.
 func (s *VictimsService) Search(query string, opts *VictimsSearchOptions) (*V2VictimsResponse, error) {
 	params, err := buildVictimsV2SearchParams(query, opts, true)
@@ -314,25 +319,45 @@ func (s *VictimsService) InspectVictimCookieDomainV2(logID string, opts *VictimC
 
 // GetManifest gets the victim file manifest (file tree).
 // Note: This endpoint returns unwrapped response.
-func (s *VictimsService) GetManifest(logID string) (*VictimManifestData, error) {
+func (s *VictimsService) GetManifest(logID string, opts ...*VictimRawOptions) (*VictimManifestData, error) {
 	var resp VictimManifestData
-	err := s.client.get(fmt.Sprintf("/service/v2/victims/%s", logID), nil, &resp)
+	err := s.client.get(victimRawPath(logID, "", opts...), nil, &resp)
 	return &resp, err
 }
 
+// GetVictimManifestV2 is an operation-id alias for GetManifest.
+func (s *VictimsService) GetVictimManifestV2(logID string, opts ...*VictimRawOptions) (*VictimManifestData, error) {
+	return s.GetManifest(logID, opts...)
+}
+
 // GetFile gets victim file content.
-func (s *VictimsService) GetFile(logID, fileID string) ([]byte, error) {
-	return s.client.getRaw(fmt.Sprintf("/service/v2/victims/%s/files/%s", logID, fileID))
+func (s *VictimsService) GetFile(logID, fileID string, opts ...*VictimRawOptions) ([]byte, error) {
+	return s.client.getRaw(victimRawPath(logID, "/files/"+url.PathEscape(fileID), opts...))
+}
+
+// GetVictimFileV2 is an operation-id alias for GetFile.
+func (s *VictimsService) GetVictimFileV2(logID, fileID string, opts ...*VictimRawOptions) ([]byte, error) {
+	return s.GetFile(logID, fileID, opts...)
+}
+
+// DownloadArchiveBytes downloads victim archive bytes.
+func (s *VictimsService) DownloadArchiveBytes(logID string, opts ...*VictimRawOptions) ([]byte, error) {
+	return s.client.getRaw(victimRawPath(logID, "/archive", opts...))
 }
 
 // DownloadArchive downloads victim archive as ZIP.
-func (s *VictimsService) DownloadArchive(logID string, outputPath string) error {
-	data, err := s.client.getRaw(fmt.Sprintf("/service/v2/victims/%s/archive", logID))
+func (s *VictimsService) DownloadArchive(logID string, outputPath string, opts ...*VictimRawOptions) error {
+	data, err := s.DownloadArchiveBytes(logID, opts...)
 	if err != nil {
 		return err
 	}
 
 	return os.WriteFile(outputPath, data, 0644)
+}
+
+// DownloadVictimArchiveV2 is an operation-id alias for DownloadArchiveBytes.
+func (s *VictimsService) DownloadVictimArchiveV2(logID string, opts ...*VictimRawOptions) ([]byte, error) {
+	return s.DownloadArchiveBytes(logID, opts...)
 }
 
 func buildVictimsV2SearchParams(query string, opts *VictimsSearchOptions, includeStructuredQuery bool) (url.Values, error) {
@@ -493,6 +518,14 @@ func buildVictimCookieDomainParams(opts *VictimCookieDomainOptions) url.Values {
 
 func victimV2Path(logID, suffix string) string {
 	return fmt.Sprintf("/service/v2/victims/%s%s", url.PathEscape(logID), suffix)
+}
+
+func victimRawPath(logID, suffix string, opts ...*VictimRawOptions) string {
+	params := url.Values{}
+	if len(opts) > 0 && opts[0] != nil {
+		addStringParam(params, "search_id", opts[0].SearchID)
+	}
+	return pathWithQuery(victimV2Path(logID, suffix), params)
 }
 
 func appendSingle(single string, values []string) []string {

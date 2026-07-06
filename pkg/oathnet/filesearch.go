@@ -3,6 +3,7 @@ package oathnet
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"time"
 )
 
@@ -13,7 +14,7 @@ type FileSearchService struct {
 
 // FileSearchCreateOptions contains options for creating a file search job.
 type FileSearchCreateOptions struct {
-	SearchMode     string   // literal, regex, wildcard
+	SearchMode     string // literal, regex, wildcard
 	LogIDs         []string
 	IncludeMatches bool
 	CaseSensitive  bool
@@ -73,10 +74,15 @@ func (s *FileSearchService) Create(expression string, opts *FileSearchCreateOpti
 	return resp, nil
 }
 
+// CreateFileSearchV2 is an operation-id alias for Create.
+func (s *FileSearchService) CreateFileSearchV2(expression string, opts *FileSearchCreateOptions) (*FileSearchJobResponse, error) {
+	return s.Create(expression, opts)
+}
+
 // GetStatus gets file search job status.
 func (s *FileSearchService) GetStatus(jobID string) (*FileSearchJobResponse, error) {
 	var rawResp map[string]interface{}
-	err := s.client.get(fmt.Sprintf("/service/v2/file-search/%s", jobID), nil, &rawResp)
+	err := s.client.get(fileSearchJobPath(jobID), nil, &rawResp)
 	if err != nil {
 		return nil, err
 	}
@@ -92,6 +98,11 @@ func (s *FileSearchService) GetStatus(jobID string) (*FileSearchJobResponse, err
 	}
 
 	return resp, nil
+}
+
+// GetFileSearchV2 is an operation-id alias for GetStatus.
+func (s *FileSearchService) GetFileSearchV2(jobID string) (*FileSearchJobResponse, error) {
+	return s.GetStatus(jobID)
 }
 
 // WaitForCompletion waits for a file search job to complete.
@@ -140,4 +151,8 @@ func (s *FileSearchService) Search(expression string, opts *FileSearchCreateOpti
 	}
 
 	return s.WaitForCompletion(job.Data.JobID, 2*time.Second, timeout)
+}
+
+func fileSearchJobPath(jobID string) string {
+	return fmt.Sprintf("/service/v2/file-search/%s", url.PathEscape(jobID))
 }

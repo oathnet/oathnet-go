@@ -17,10 +17,12 @@ type ExportsService struct {
 
 // ExportCreateOptions contains options for creating an export job.
 type ExportCreateOptions struct {
-	Format string // jsonl, csv
-	Limit  int
-	Fields []string
-	Search map[string]string
+	Format      string // json, jsonl, csv, txt, html
+	Limit       int
+	Fields      []string
+	Search      interface{}
+	Service     string // stealer, victims, breach
+	QueryConfig interface{}
 }
 
 // Create creates an export job.
@@ -43,6 +45,12 @@ func (s *ExportsService) Create(exportType string, opts *ExportCreateOptions) (*
 		if opts.Search != nil {
 			body["search"] = opts.Search
 		}
+		if opts.Service != "" {
+			body["service"] = opts.Service
+		}
+		if opts.QueryConfig != nil {
+			body["query_config"] = opts.QueryConfig
+		}
 	}
 
 	var rawResp map[string]interface{}
@@ -62,6 +70,11 @@ func (s *ExportsService) Create(exportType string, opts *ExportCreateOptions) (*
 	}
 
 	return resp, nil
+}
+
+// CreateExportV2 is an operation-id alias for Create.
+func (s *ExportsService) CreateExportV2(exportType string, opts *ExportCreateOptions) (*ExportJobResponse, error) {
+	return s.Create(exportType, opts)
 }
 
 // GetStatus gets export job status.
@@ -85,6 +98,11 @@ func (s *ExportsService) GetStatus(jobID string) (*ExportJobResponse, error) {
 	return resp, nil
 }
 
+// GetExportV2 is an operation-id alias for GetStatus.
+func (s *ExportsService) GetExportV2(jobID string) (*ExportJobResponse, error) {
+	return s.GetStatus(jobID)
+}
+
 // List lists export jobs.
 func (s *ExportsService) List(page, pageSize int) (*V2ExportJobListResponse, error) {
 	params := url.Values{}
@@ -101,14 +119,28 @@ func (s *ExportsService) ListExportsV2(page, pageSize int) (*V2ExportJobListResp
 	return s.List(page, pageSize)
 }
 
+// DownloadBytes downloads export file bytes.
+func (s *ExportsService) DownloadBytes(jobID string) ([]byte, error) {
+	data, err := s.client.getRaw(exportJobPath(jobID, "/download"))
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
 // Download downloads the export file.
 func (s *ExportsService) Download(jobID, outputPath string) error {
-	data, err := s.client.getRaw(exportJobPath(jobID, "/download"))
+	data, err := s.DownloadBytes(jobID)
 	if err != nil {
 		return err
 	}
-
 	return os.WriteFile(outputPath, data, 0644)
+}
+
+// DownloadExportV2 is an operation-id alias for DownloadBytes.
+func (s *ExportsService) DownloadExportV2(jobID string) ([]byte, error) {
+	return s.DownloadBytes(jobID)
 }
 
 // WaitForCompletion waits for an export job to complete.
