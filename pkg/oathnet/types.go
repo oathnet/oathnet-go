@@ -575,22 +575,48 @@ type BulkJobResponse struct {
 }
 
 type BulkJobData struct {
-	JobID           string        `json:"job_id,omitempty"`
-	Status          string        `json:"status,omitempty"`
-	TermsCount      int           `json:"terms_count,omitempty"`
-	ResultsCount    int           `json:"results_count,omitempty"`
-	Format          string        `json:"format,omitempty"`
-	Service         string        `json:"service,omitempty"`
-	CreatedAt       string        `json:"created_at,omitempty"`
-	CompletedAt     string        `json:"completed_at,omitempty"`
-	ExpiresAt       string        `json:"expires_at,omitempty"`
-	NextPollAfterMs int           `json:"next_poll_after_ms,omitempty"`
-	Meta            *ResponseMeta `json:"_meta,omitempty"`
+	ID              string                 `json:"id,omitempty"`
+	JobID           string                 `json:"job_id,omitempty"`
+	Status          string                 `json:"status,omitempty"`
+	CreatedAt       string                 `json:"created_at,omitempty"`
+	StartedAt       string                 `json:"started_at,omitempty"`
+	UpdatedAt       string                 `json:"updated_at,omitempty"`
+	CompletedAt     string                 `json:"completed_at,omitempty"`
+	ExpiresAt       string                 `json:"expires_at,omitempty"`
+	Progress        *ExportProgress        `json:"progress,omitempty"`
+	Result          *ExportResult          `json:"result,omitempty"`
+	LastError       string                 `json:"last_error,omitempty"`
+	Request         *BulkJobRequestSummary `json:"request,omitempty"`
+	NextPollAfterMs int                    `json:"next_poll_after_ms,omitempty"`
+	Metadata        map[string]interface{} `json:"metadata,omitempty"`
+	User            string                 `json:"user,omitempty"`
+	SearchService   string                 `json:"search_service,omitempty"`
+	OutputFormat    string                 `json:"output_format,omitempty"`
+	ResultsExpired  bool                   `json:"results_expired,omitempty"`
+	Query           string                 `json:"query,omitempty"`
+	ResultsCount    int                    `json:"results_count,omitempty"`
+	LookupsDeducted int                    `json:"lookups_deducted,omitempty"`
+	TermsCount      int                    `json:"terms_count,omitempty"`
+	Format          string                 `json:"format,omitempty"`
+	Service         string                 `json:"service,omitempty"`
+	Meta            *ResponseMeta          `json:"_meta,omitempty"`
+}
+
+type BulkJobRequestSummary struct {
+	Type         string   `json:"type,omitempty"`
+	Service      string   `json:"service,omitempty"`
+	Format       string   `json:"format,omitempty"`
+	Limit        int      `json:"limit,omitempty"`
+	Fields       []string `json:"fields,omitempty"`
+	RequestCount int      `json:"request_count,omitempty"`
 }
 
 type BulkJobListResponse struct {
+	Count    int           `json:"count"`
+	Next     *string       `json:"next,omitempty"`
+	Previous *string       `json:"previous,omitempty"`
 	Results  []BulkJobData `json:"results"`
-	Total    int           `json:"total"`
-	Page     int           `json:"page"`
-	PageSize int           `json:"page_size"`
+	Total    int           `json:"total,omitempty"`
+	Page     int           `json:"page,omitempty"`
+	PageSize int           `json:"page_size,omitempty"`
 }

@@ -6,75 +6,87 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
+
+const bulkSearchBasePath = "/service/v2/bulk-search"
 
 // BulkService handles bulk search operations.
 type BulkService struct {
 	client *Client
 }
 
+// BulkSearchQueryConfig is the shared V2 search/filter configuration applied
+// to every term in a bulk search job.
+type BulkSearchQueryConfig map[string]interface{}
+
+// BulkSearchCreateRequest is the canonical V2 bulk-search request body.
+type BulkSearchCreateRequest struct {
+	Terms       []string              `json:"terms,omitempty"`
+	Service     string                `json:"service"`
+	Format      string                `json:"format,omitempty"`
+	DBNames     []string              `json:"dbnames,omitempty"`
+	QueryConfig BulkSearchQueryConfig `json:"query_config,omitempty"`
+	Limit       int                   `json:"limit,omitempty"`
+	Fields      []string              `json:"fields,omitempty"`
+}
+
 // BulkCreateOptions contains options for creating a bulk job.
 type BulkCreateOptions struct {
-	Format  string // jsonl, csv
-	DBNames string
+	Format      string // csv, json, jsonl, txt, html
+	DBNames     string // Deprecated: comma-separated legacy database filter. Use DBNameList.
+	DBNameList  []string
+	QueryConfig BulkSearchQueryConfig
+	Limit       int
+	Fields      []string
 }
 
 // Create creates a bulk search job.
 func (s *BulkService) Create(terms []string, service string, opts *BulkCreateOptions) (*BulkJobResponse, error) {
-	body := map[string]interface{}{
-		"terms":   terms,
-		"service": service,
-		"format":  "jsonl",
+	body := BulkSearchCreateRequest{
+		Terms:   terms,
+		Service: service,
 	}
 
 	if opts != nil {
 		if opts.Format != "" {
-			body["format"] = opts.Format
+			body.Format = opts.Format
 		}
-		if opts.DBNames != "" {
-			body["dbnames"] = opts.DBNames
+		if len(opts.DBNameList) > 0 {
+			body.DBNames = append([]string(nil), opts.DBNameList...)
+		} else if opts.DBNames != "" {
+			body.DBNames = splitCommaList(opts.DBNames)
+		}
+		if opts.QueryConfig != nil {
+			body.QueryConfig = opts.QueryConfig
+		}
+		if opts.Limit > 0 {
+			body.Limit = opts.Limit
+		}
+		if opts.Fields != nil {
+			body.Fields = opts.Fields
 		}
 	}
 
 	var rawResp map[string]interface{}
-	err := s.client.post("/service/bulk-search", body, &rawResp)
+	err := s.client.post(bulkSearchBasePath, body, &rawResp)
 	if err != nil {
 		return nil, err
 	}
 
-	resp := &BulkJobResponse{Success: true}
-	if _, ok := rawResp["success"]; ok {
-		jsonData, _ := json.Marshal(rawResp)
-		json.Unmarshal(jsonData, resp)
-	} else {
-		jsonData, _ := json.Marshal(rawResp)
-		resp.Data = &BulkJobData{}
-		json.Unmarshal(jsonData, resp.Data)
-	}
-
-	return resp, nil
+	return decodeBulkJobResponse(rawResp)
 }
 
 // GetStatus gets bulk job status.
 func (s *BulkService) GetStatus(jobID string) (*BulkJobResponse, error) {
 	var rawResp map[string]interface{}
-	err := s.client.get(fmt.Sprintf("/service/bulk-search/%s", jobID), nil, &rawResp)
+	err := s.client.get(bulkSearchJobPath(jobID, ""), nil, &rawResp)
 	if err != nil {
 		return nil, err
 	}
 
-	resp := &BulkJobResponse{Success: true}
-	if _, ok := rawResp["success"]; ok {
-		jsonData, _ := json.Marshal(rawResp)
-		json.Unmarshal(jsonData, resp)
-	} else {
-		jsonData, _ := json.Marshal(rawResp)
-		resp.Data = &BulkJobData{}
-		json.Unmarshal(jsonData, resp.Data)
-	}
-
-	return resp, nil
+	return decodeBulkJobResponse(rawResp)
 }
 
 // List lists bulk search jobs.
@@ -88,13 +100,13 @@ func (s *BulkService) List(page, pageSize int) (*BulkJobListResponse, error) {
 	}
 
 	var resp BulkJobListResponse
-	err := s.client.get("/service/bulk-search", params, &resp)
+	err := s.client.get(bulkSearchBasePath+"/list", params, &resp)
 	return &resp, err
 }
 
 // Download downloads bulk search results.
 func (s *BulkService) Download(jobID, outputPath string) error {
-	data, err := s.client.getRaw(fmt.Sprintf("/service/bulk-search/%s/download", jobID))
+	data, err := s.client.getRaw(bulkSearchJobPath(jobID, "/download"))
 	if err != nil {
 		return err
 	}
@@ -152,4 +164,41 @@ func (s *BulkService) Search(terms []string, service, outputPath string, opts *B
 	}
 
 	return s.Download(job.Data.JobID, outputPath)
+}
+
+func bulkSearchJobPath(jobID, suffix string) string {
+	return fmt.Sprintf("%s/%s%s", bulkSearchBasePath, url.PathEscape(jobID), suffix)
+}
+
+func decodeBulkJobResponse(rawResp map[string]interface{}) (*BulkJobResponse, error) {
+	resp := &BulkJobResponse{Success: true}
+	jsonData, err := json.Marshal(rawResp)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, ok := rawResp["success"]; ok {
+		if err := json.Unmarshal(jsonData, resp); err != nil {
+			return nil, err
+		}
+		return resp, nil
+	}
+
+	resp.Data = &BulkJobData{}
+	if err := json.Unmarshal(jsonData, resp.Data); err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func splitCommaList(value string) []string {
+	parts := strings.Split(value, ",")
+	items := make([]string, 0, len(parts))
+	for _, part := range parts {
+		item := strings.TrimSpace(part)
+		if item != "" {
+			items = append(items, item)
+		}
+	}
+	return items
 }
