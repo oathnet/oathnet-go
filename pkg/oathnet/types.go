@@ -1,5 +1,7 @@
 package oathnet
 
+import "encoding/json"
+
 // ResponseMeta contains metadata about the API response.
 type ResponseMeta struct {
 	User        *UserMeta        `json:"user,omitempty"`
@@ -100,27 +102,99 @@ type BreachSearchResponse struct {
 }
 
 type BreachSearchData struct {
-	Results      []BreachResult `json:"results"`
-	ResultsFound int            `json:"results_found"`
-	ResultsShown int            `json:"results_shown"`
-	Cursor       string         `json:"cursor,omitempty"`
-	Meta         *ResponseMeta  `json:"_meta,omitempty"`
+	Results        []BreachResult `json:"results"`
+	ResultsFound   int            `json:"results_found"`
+	ResultsShown   int            `json:"results_shown"`
+	NextCursorMark string         `json:"nextCursorMark,omitempty"`
+	Cursor         string         `json:"cursor,omitempty"`
+	Meta           *ResponseMeta  `json:"_meta,omitempty"`
 }
 
 type BreachResult struct {
-	ID           string      `json:"id,omitempty"`
-	DBName       string      `json:"dbname,omitempty"`
-	Email        string      `json:"email,omitempty"`
-	Username     interface{} `json:"username,omitempty"` // Can be string or []string
-	Password     string      `json:"password,omitempty"`
-	PasswordHash string      `json:"password_hash,omitempty"`
-	FullName     interface{} `json:"full_name,omitempty"`
-	FirstName    interface{} `json:"first_name,omitempty"`
-	LastName     interface{} `json:"last_name,omitempty"`
-	PhoneNumber  string      `json:"phone_number,omitempty"`
-	City         interface{} `json:"city,omitempty"`
-	Country      interface{} `json:"country,omitempty"`
-	IP           string      `json:"ip,omitempty"`
+	ID           string                 `json:"id,omitempty"`
+	DBName       string                 `json:"dbname,omitempty"`
+	Email        string                 `json:"email,omitempty"`
+	Username     interface{}            `json:"username,omitempty"` // Can be string or []string
+	Password     string                 `json:"password,omitempty"`
+	PasswordHash string                 `json:"password_hash,omitempty"`
+	Domain       interface{}            `json:"domain,omitempty"`
+	Source       string                 `json:"source,omitempty"`
+	Date         interface{}            `json:"date,omitempty"`
+	DateBirth    interface{}            `json:"date_birth,omitempty"`
+	FullName     interface{}            `json:"full_name,omitempty"`
+	FirstName    interface{}            `json:"first_name,omitempty"`
+	LastName     interface{}            `json:"last_name,omitempty"`
+	PhoneNumber  string                 `json:"phone_number,omitempty"`
+	City         interface{}            `json:"city,omitempty"`
+	Country      interface{}            `json:"country,omitempty"`
+	Gender       string                 `json:"gender,omitempty"`
+	Language     string                 `json:"language,omitempty"`
+	CreatedAt    string                 `json:"created_at,omitempty"`
+	IP           string                 `json:"ip,omitempty"`
+	Version      int64                  `json:"_version_,omitempty"`
+	Extra        map[string]interface{} `json:"-"`
+}
+
+func (d *BreachSearchData) UnmarshalJSON(data []byte) error {
+	type breachSearchData BreachSearchData
+	aux := struct {
+		*breachSearchData
+		NextCursorMarkSnake string `json:"next_cursor_mark"`
+	}{
+		breachSearchData: (*breachSearchData)(d),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	cursor := d.NextCursorMark
+	if cursor == "" {
+		cursor = aux.NextCursorMarkSnake
+	}
+	if cursor == "" {
+		cursor = d.Cursor
+	}
+	d.NextCursorMark = cursor
+	d.Cursor = cursor
+	return nil
+}
+
+func (r *BreachResult) UnmarshalJSON(data []byte) error {
+	type breachResult BreachResult
+	var decoded breachResult
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+
+	extra, err := legacyResultExtra(data, []string{
+		"id",
+		"dbname",
+		"email",
+		"username",
+		"password",
+		"password_hash",
+		"domain",
+		"source",
+		"date",
+		"date_birth",
+		"full_name",
+		"first_name",
+		"last_name",
+		"phone_number",
+		"city",
+		"country",
+		"gender",
+		"language",
+		"created_at",
+		"ip",
+		"_version_",
+	})
+	if err != nil {
+		return err
+	}
+	decoded.Extra = extra
+	*r = BreachResult(decoded)
+	return nil
 }
 
 type StealerSearchResponse struct {
@@ -130,22 +204,95 @@ type StealerSearchResponse struct {
 }
 
 type StealerSearchData struct {
-	Results      []StealerResult `json:"results"`
-	ResultsFound int             `json:"results_found"`
-	ResultsShown int             `json:"results_shown"`
-	Cursor       string          `json:"cursor,omitempty"`
-	Meta         *ResponseMeta   `json:"_meta,omitempty"`
+	Results        []StealerResult `json:"results"`
+	ResultsFound   int             `json:"results_found"`
+	ResultsShown   int             `json:"results_shown"`
+	NextCursorMark string          `json:"nextCursorMark,omitempty"`
+	Cursor         string          `json:"cursor,omitempty"`
+	Meta           *ResponseMeta   `json:"_meta,omitempty"`
 }
 
 type StealerResult struct {
-	LOG      string   `json:"LOG,omitempty"`
-	Domain   []string `json:"domain,omitempty"`
-	Email    []string `json:"email,omitempty"`
-	Username []string `json:"username,omitempty"`
-	Password []string `json:"password,omitempty"`
-	URL      []string `json:"url,omitempty"`
-	IP       string   `json:"ip,omitempty"`
-	Country  string   `json:"country,omitempty"`
+	ID        string                 `json:"id,omitempty"`
+	LOG       string                 `json:"LOG,omitempty"`
+	Domain    []string               `json:"domain,omitempty"`
+	Subdomain []string               `json:"subdomain,omitempty"`
+	Path      []string               `json:"path,omitempty"`
+	Email     []string               `json:"email,omitempty"`
+	Username  []string               `json:"username,omitempty"`
+	Password  []string               `json:"password,omitempty"`
+	URL       []string               `json:"url,omitempty"`
+	IP        string                 `json:"ip,omitempty"`
+	Country   string                 `json:"country,omitempty"`
+	Version   int64                  `json:"_version_,omitempty"`
+	Extra     map[string]interface{} `json:"-"`
+}
+
+func (d *StealerSearchData) UnmarshalJSON(data []byte) error {
+	type stealerSearchData StealerSearchData
+	aux := struct {
+		*stealerSearchData
+		NextCursorMarkSnake string `json:"next_cursor_mark"`
+	}{
+		stealerSearchData: (*stealerSearchData)(d),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	cursor := d.NextCursorMark
+	if cursor == "" {
+		cursor = aux.NextCursorMarkSnake
+	}
+	if cursor == "" {
+		cursor = d.Cursor
+	}
+	d.NextCursorMark = cursor
+	d.Cursor = cursor
+	return nil
+}
+
+func (r *StealerResult) UnmarshalJSON(data []byte) error {
+	type stealerResult StealerResult
+	var decoded stealerResult
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+
+	extra, err := legacyResultExtra(data, []string{
+		"id",
+		"LOG",
+		"domain",
+		"subdomain",
+		"path",
+		"email",
+		"username",
+		"password",
+		"url",
+		"ip",
+		"country",
+		"_version_",
+	})
+	if err != nil {
+		return err
+	}
+	decoded.Extra = extra
+	*r = StealerResult(decoded)
+	return nil
+}
+
+func legacyResultExtra(data []byte, knownKeys []string) (map[string]interface{}, error) {
+	var extra map[string]interface{}
+	if err := json.Unmarshal(data, &extra); err != nil {
+		return nil, err
+	}
+	for _, key := range knownKeys {
+		delete(extra, key)
+	}
+	if len(extra) == 0 {
+		return nil, nil
+	}
+	return extra, nil
 }
 
 // ============================================
