@@ -183,12 +183,20 @@ func (c *Client) delete(path string, result interface{}) error {
 
 // getRaw performs a GET request and returns raw bytes.
 func (c *Client) getRaw(path string) ([]byte, error) {
+	return c.getRawWithHeaders(path, nil)
+}
+
+// getRawWithHeaders performs a GET request with optional headers and returns raw bytes.
+func (c *Client) getRawWithHeaders(path string, headers map[string]string) ([]byte, error) {
 	req, err := http.NewRequest("GET", c.baseURL+path, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Set("x-api-key", c.apiKey)
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

@@ -535,6 +535,81 @@ type V2VictimPropertyResult struct {
 	IndexedAt       string  `json:"indexed_at,omitempty"`
 }
 
+type V2VictimSummaryResponse struct {
+	LogID               string                 `json:"log_id,omitempty"`
+	GeneratedAt         string                 `json:"generated_at,omitempty"`
+	Stale               bool                   `json:"stale,omitempty"`
+	Victim              map[string]interface{} `json:"victim,omitempty"`
+	Assessment          map[string]interface{} `json:"assessment,omitempty"`
+	Access              map[string]interface{} `json:"access,omitempty"`
+	Targets             map[string]interface{} `json:"targets,omitempty"`
+	Files               map[string]interface{} `json:"files,omitempty"`
+	Cookies             map[string]interface{} `json:"cookies,omitempty"`
+	CookieInvestigation map[string]interface{} `json:"cookie_investigation,omitempty"`
+	History             map[string]interface{} `json:"history,omitempty"`
+	Cards               map[string]interface{} `json:"cards,omitempty"`
+	Domains             map[string]interface{} `json:"domains,omitempty"`
+	Artifacts           map[string]interface{} `json:"artifacts,omitempty"`
+	Warnings            []string               `json:"warnings,omitempty"`
+	PolicyRedacted      bool                   `json:"policy_redacted,omitempty"`
+	UpgradeRequired     bool                   `json:"upgrade_required,omitempty"`
+	RedactionMarker     string                 `json:"redaction_marker,omitempty"`
+}
+
+type V2VictimCookieInventoryResponse struct {
+	LogID           string                          `json:"log_id,omitempty"`
+	Items           []V2VictimCookieInventoryItem   `json:"items,omitempty"`
+	Domains         []V2VictimCookieInventoryDomain `json:"domains,omitempty"`
+	Meta            *V2SearchMeta                   `json:"meta,omitempty"`
+	NextCursor      string                          `json:"next_cursor,omitempty"`
+	FilesScanned    int                             `json:"files_scanned,omitempty"`
+	FilesMatched    int                             `json:"files_matched,omitempty"`
+	Truncated       bool                            `json:"truncated,omitempty"`
+	ValuesRedacted  bool                            `json:"values_redacted,omitempty"`
+	Warnings        []string                        `json:"warnings,omitempty"`
+	PolicyRedacted  bool                            `json:"policy_redacted,omitempty"`
+	UpgradeRequired bool                            `json:"upgrade_required,omitempty"`
+	RedactionMarker string                          `json:"redaction_marker,omitempty"`
+}
+
+type V2VictimCookieInventoryItem struct {
+	Domain       string `json:"domain,omitempty"`
+	CookieDomain string `json:"cookie_domain,omitempty"`
+	Name         string `json:"name,omitempty"`
+	Path         string `json:"path,omitempty"`
+	ExpiresAt    string `json:"expires_at,omitempty"`
+	ExpiresUnix  int64  `json:"expires_unix,omitempty"`
+	Status       string `json:"status,omitempty"`
+	Session      bool   `json:"session,omitempty"`
+	Secure       bool   `json:"secure,omitempty"`
+	HTTPOnly     bool   `json:"http_only,omitempty"`
+	SourceFileID string `json:"source_file_id,omitempty"`
+	SourcePath   string `json:"source_path,omitempty"`
+	LineNumber   int    `json:"line_number,omitempty"`
+}
+
+type V2VictimCookieInventoryDomain struct {
+	Domain      string `json:"domain,omitempty"`
+	Count       int    `json:"count,omitempty"`
+	Active      int    `json:"active,omitempty"`
+	Expired     int    `json:"expired,omitempty"`
+	Session     int    `json:"session,omitempty"`
+	Secure      int    `json:"secure,omitempty"`
+	HTTPOnly    int    `json:"http_only,omitempty"`
+	SourceFiles int    `json:"source_files,omitempty"`
+}
+
+type V2VictimCookieDomainInspectResponse struct {
+	LogID        string                   `json:"log_id,omitempty"`
+	Domain       string                   `json:"domain,omitempty"`
+	Items        []map[string]interface{} `json:"items,omitempty"`
+	CopyText     string                   `json:"copy_text,omitempty"`
+	FilesScanned int                      `json:"files_scanned,omitempty"`
+	FilesMatched int                      `json:"files_matched,omitempty"`
+	Truncated    bool                     `json:"truncated,omitempty"`
+	Warnings     []string                 `json:"warnings,omitempty"`
+}
+
 // ============================================
 // V2 FILE SEARCH TYPES
 // ============================================
@@ -629,16 +704,20 @@ type ExportJobResponse struct {
 }
 
 type ExportJobData struct {
-	JobID           string          `json:"job_id,omitempty"`
-	Status          string          `json:"status,omitempty"`
-	Progress        *ExportProgress `json:"progress,omitempty"`
-	Result          *ExportResult   `json:"result,omitempty"`
-	CreatedAt       string          `json:"created_at,omitempty"`
-	StartedAt       string          `json:"started_at,omitempty"`
-	CompletedAt     string          `json:"completed_at,omitempty"`
-	ExpiresAt       string          `json:"expires_at,omitempty"`
-	NextPollAfterMs int             `json:"next_poll_after_ms,omitempty"`
-	Meta            *ResponseMeta   `json:"_meta,omitempty"`
+	ID              string                 `json:"id,omitempty"`
+	JobID           string                 `json:"job_id,omitempty"`
+	Status          string                 `json:"status,omitempty"`
+	Progress        *ExportProgress        `json:"progress,omitempty"`
+	Result          *ExportResult          `json:"result,omitempty"`
+	CreatedAt       string                 `json:"created_at,omitempty"`
+	StartedAt       string                 `json:"started_at,omitempty"`
+	CompletedAt     string                 `json:"completed_at,omitempty"`
+	ExpiresAt       string                 `json:"expires_at,omitempty"`
+	LastError       string                 `json:"last_error,omitempty"`
+	Request         *ExportRequest         `json:"request,omitempty"`
+	NextPollAfterMs int                    `json:"next_poll_after_ms,omitempty"`
+	Metadata        map[string]interface{} `json:"metadata,omitempty"`
+	Meta            *ResponseMeta          `json:"_meta,omitempty"`
 }
 
 type ExportProgress struct {
@@ -651,11 +730,29 @@ type ExportProgress struct {
 
 type ExportResult struct {
 	FileName    string `json:"file_name,omitempty"`
+	FilePath    string `json:"file_path,omitempty"`
 	FileSize    int64  `json:"file_size,omitempty"`
 	Records     int    `json:"records,omitempty"`
 	Format      string `json:"format,omitempty"`
+	ReadyAt     string `json:"ready_at,omitempty"`
 	ExpiresAt   string `json:"expires_at,omitempty"`
 	DownloadURL string `json:"download_url,omitempty"`
+}
+
+type ExportRequest struct {
+	Type         string   `json:"type,omitempty"`
+	Service      string   `json:"service,omitempty"`
+	Format       string   `json:"format,omitempty"`
+	Limit        int      `json:"limit,omitempty"`
+	Fields       []string `json:"fields,omitempty"`
+	RequestCount int      `json:"request_count,omitempty"`
+}
+
+type V2ExportJobListResponse struct {
+	Count    int             `json:"count"`
+	Next     *string         `json:"next,omitempty"`
+	Previous *string         `json:"previous,omitempty"`
+	Results  []ExportJobData `json:"results"`
 }
 
 // ============================================

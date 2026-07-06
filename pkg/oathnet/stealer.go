@@ -3,7 +3,6 @@ package oathnet
 import (
 	"encoding/json"
 	"net/url"
-	"strconv"
 )
 
 const (
@@ -20,15 +19,43 @@ type StealerV2Service struct {
 
 // StealerSearchOptions contains options for V2 stealer search.
 type StealerSearchOptions struct {
-	Cursor        string
-	PageSize      int
-	Domain        string
-	Subdomain     string
-	Email         string
-	Username      string
-	Password      string
-	Wildcard      bool
-	HasLogID      bool
+	Cursor                 string
+	PageSize               int
+	Sort                   string
+	From                   string
+	To                     string
+	DateField              string
+	LogID                  string
+	HasLogID               bool
+	Wildcard               bool
+	Logic                  string
+	Filter                 interface{}
+	FilterID               string
+	Domain                 string
+	Domains                []string
+	Subdomain              string
+	Subdomains             []string
+	Email                  string
+	Emails                 []string
+	EmailDomains           []string
+	Username               string
+	Usernames              []string
+	Password               string
+	Passwords              []string
+	PasswordHashes         []string
+	Paths                  []string
+	IPs                    []string
+	HWIDs                  []string
+	DiscordIDs             []string
+	SourceTypes            []string
+	ArchiveHashes          []string
+	CanonicalCredentialIDs []string
+	Fields                 []string
+	SearchID               string
+	View                   string
+	ExtraQuery             map[string][]string
+
+	// Deprecated compatibility filters retained for callers of older SDK versions.
 	Country       string
 	MalwareFamily string
 }
@@ -114,50 +141,37 @@ type PhonebookOptions struct {
 
 // Search searches the V2 stealer database.
 func (s *StealerV2Service) Search(query string, opts *StealerSearchOptions) (*V2StealerResponse, error) {
-	params := url.Values{}
-	if query != "" {
-		params.Set("q", query)
-	}
-
-	if opts != nil {
-		if opts.Cursor != "" {
-			params.Set("cursor", opts.Cursor)
-		}
-		if opts.PageSize > 0 {
-			params.Set("page_size", strconv.Itoa(opts.PageSize))
-		}
-		if opts.Domain != "" {
-			params.Add("domain[]", opts.Domain)
-		}
-		if opts.Subdomain != "" {
-			params.Add("subdomain[]", opts.Subdomain)
-		}
-		if opts.Email != "" {
-			params.Set("email", opts.Email)
-		}
-		if opts.Username != "" {
-			params.Add("username[]", opts.Username)
-		}
-		if opts.Password != "" {
-			params.Add("password[]", opts.Password)
-		}
-		if opts.Wildcard {
-			params.Set("wildcard", "true")
-		}
-		if opts.HasLogID {
-			params.Set("has_log_id", "true")
-		}
-		if opts.Country != "" {
-			params.Set("country", opts.Country)
-		}
-		if opts.MalwareFamily != "" {
-			params.Set("malware_family", opts.MalwareFamily)
-		}
+	params, err := buildStealerV2SearchParams(query, opts, true)
+	if err != nil {
+		return nil, err
 	}
 
 	var resp V2StealerResponse
-	err := s.client.get(stealerV2SearchPath, params, &resp)
+	err = s.client.get(stealerV2SearchPath, params, &resp)
 	return &resp, err
+}
+
+// SearchPost searches V2 stealer records using a JSON body for filter/filter_id.
+func (s *StealerV2Service) SearchPost(body V2SearchPostBody, opts *StealerSearchOptions) (*V2StealerResponse, error) {
+	params, err := buildStealerV2SearchParams("", opts, false)
+	if err != nil {
+		return nil, err
+	}
+	path := pathWithQuery(stealerV2SearchPath, params)
+
+	var requestBody interface{}
+	if body != nil {
+		requestBody = body
+	}
+
+	var resp V2StealerResponse
+	err = s.client.post(path, requestBody, &resp)
+	return &resp, err
+}
+
+// SearchStealerV2Post is an operation-id alias for SearchPost.
+func (s *StealerV2Service) SearchStealerV2Post(body V2SearchPostBody, opts *StealerSearchOptions) (*V2StealerResponse, error) {
+	return s.SearchPost(body, opts)
 }
 
 // InvestigationSearch searches the canonical V2 stealer investigation route.
@@ -272,4 +286,63 @@ func buildPhonebookParams(domain string, opts *PhonebookOptions) url.Values {
 	addStringParam(params, "search_id", opts.SearchID)
 
 	return params
+}
+
+func buildStealerV2SearchParams(query string, opts *StealerSearchOptions, includeStructuredQuery bool) (url.Values, error) {
+	params := url.Values{}
+	addStringParam(params, "q", query)
+	if opts == nil {
+		return params, nil
+	}
+
+	addStringParam(params, "cursor", opts.Cursor)
+	addIntParam(params, "page_size", opts.PageSize)
+	addStringParam(params, "sort", opts.Sort)
+	addStringParam(params, "from", opts.From)
+	addStringParam(params, "to", opts.To)
+	addStringParam(params, "date_field", opts.DateField)
+	addStringParam(params, "log_id", opts.LogID)
+	addBoolParam(params, "has_log_id", opts.HasLogID)
+	addBoolParam(params, "wildcard", opts.Wildcard)
+	addStringParam(params, "logic", opts.Logic)
+	if includeStructuredQuery {
+		if err := addFilterParam(params, opts.Filter); err != nil {
+			return nil, err
+		}
+		addStringParam(params, "filter_id", opts.FilterID)
+	}
+
+	addSingleAndRepeatedParam(params, "domain[]", opts.Domain, opts.Domains)
+	addSingleAndRepeatedParam(params, "subdomain[]", opts.Subdomain, opts.Subdomains)
+	addSingleAndRepeatedParam(params, "email[]", opts.Email, opts.Emails)
+	addRepeatedParam(params, "email_domain[]", opts.EmailDomains)
+	addSingleAndRepeatedParam(params, "username[]", opts.Username, opts.Usernames)
+	addSingleAndRepeatedParam(params, "password[]", opts.Password, opts.Passwords)
+	addRepeatedParam(params, "password_hash[]", opts.PasswordHashes)
+	addRepeatedParam(params, "path[]", opts.Paths)
+	addRepeatedParam(params, "ip[]", opts.IPs)
+	addRepeatedParam(params, "hwid[]", opts.HWIDs)
+	addRepeatedParam(params, "discord_id[]", opts.DiscordIDs)
+	addRepeatedParam(params, "source_type[]", opts.SourceTypes)
+	addRepeatedParam(params, "archive_hash[]", opts.ArchiveHashes)
+	addRepeatedParam(params, "canonical_credential_id[]", opts.CanonicalCredentialIDs)
+	addRepeatedParam(params, "fields[]", opts.Fields)
+	addStringParam(params, "search_id", opts.SearchID)
+	addStringParam(params, "view", opts.View)
+
+	addStringParam(params, "country", opts.Country)
+	addStringParam(params, "malware_family", opts.MalwareFamily)
+
+	for key, values := range opts.ExtraQuery {
+		addRepeatedParam(params, key, values)
+	}
+
+	return params, nil
+}
+
+func addSingleAndRepeatedParam(params url.Values, key, single string, values []string) {
+	if single != "" {
+		params.Add(key, single)
+	}
+	addRepeatedParam(params, key, values)
 }

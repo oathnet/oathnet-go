@@ -3,9 +3,12 @@ package oathnet
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"time"
 )
+
+const exportsV2BasePath = "/service/v2/exports"
 
 // ExportsService handles V2 export operations.
 type ExportsService struct {
@@ -14,7 +17,7 @@ type ExportsService struct {
 
 // ExportCreateOptions contains options for creating an export job.
 type ExportCreateOptions struct {
-	Format string            // jsonl, csv
+	Format string // jsonl, csv
 	Limit  int
 	Fields []string
 	Search map[string]string
@@ -43,7 +46,7 @@ func (s *ExportsService) Create(exportType string, opts *ExportCreateOptions) (*
 	}
 
 	var rawResp map[string]interface{}
-	err := s.client.post("/service/v2/exports", body, &rawResp)
+	err := s.client.post(exportsV2BasePath, body, &rawResp)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +67,7 @@ func (s *ExportsService) Create(exportType string, opts *ExportCreateOptions) (*
 // GetStatus gets export job status.
 func (s *ExportsService) GetStatus(jobID string) (*ExportJobResponse, error) {
 	var rawResp map[string]interface{}
-	err := s.client.get(fmt.Sprintf("/service/v2/exports/%s", jobID), nil, &rawResp)
+	err := s.client.get(exportJobPath(jobID, ""), nil, &rawResp)
 	if err != nil {
 		return nil, err
 	}
@@ -82,9 +85,25 @@ func (s *ExportsService) GetStatus(jobID string) (*ExportJobResponse, error) {
 	return resp, nil
 }
 
+// List lists export jobs.
+func (s *ExportsService) List(page, pageSize int) (*V2ExportJobListResponse, error) {
+	params := url.Values{}
+	addIntParam(params, "page", page)
+	addIntParam(params, "page_size", pageSize)
+
+	var resp V2ExportJobListResponse
+	err := s.client.get(exportsV2BasePath+"/list", params, &resp)
+	return &resp, err
+}
+
+// ListExportsV2 is an operation-id alias for List.
+func (s *ExportsService) ListExportsV2(page, pageSize int) (*V2ExportJobListResponse, error) {
+	return s.List(page, pageSize)
+}
+
 // Download downloads the export file.
 func (s *ExportsService) Download(jobID, outputPath string) error {
-	data, err := s.client.getRaw(fmt.Sprintf("/service/v2/exports/%s/download", jobID))
+	data, err := s.client.getRaw(exportJobPath(jobID, "/download"))
 	if err != nil {
 		return err
 	}
@@ -142,4 +161,8 @@ func (s *ExportsService) Export(exportType, outputPath string, opts *ExportCreat
 	}
 
 	return s.Download(job.Data.JobID, outputPath)
+}
+
+func exportJobPath(jobID, suffix string) string {
+	return fmt.Sprintf("%s/%s%s", exportsV2BasePath, url.PathEscape(jobID), suffix)
 }
