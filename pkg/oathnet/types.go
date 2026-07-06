@@ -216,13 +216,16 @@ type SubdomainResponse struct {
 	Success bool           `json:"success"`
 	Message string         `json:"message,omitempty"`
 	Data    *SubdomainData `json:"data,omitempty"`
+	Meta    *ResponseMeta  `json:"_meta,omitempty"`
 }
 
 type SubdomainData struct {
-	Subdomains []string      `json:"subdomains"`
-	Count      int           `json:"count"`
-	Domain     string        `json:"domain"`
-	Meta       *ResponseMeta `json:"_meta,omitempty"`
+	Subdomains   []interface{}          `json:"subdomains"`
+	Count        int                    `json:"count"`
+	Domain       string                 `json:"domain,omitempty"`
+	AliveResults map[string]interface{} `json:"alive_results,omitempty"`
+	Source       string                 `json:"source,omitempty"`
+	Meta         *ResponseMeta          `json:"_meta,omitempty"`
 }
 
 // ============================================
@@ -806,6 +809,7 @@ type IPInfoData struct {
 	Currency      string        `json:"currency,omitempty"`
 	ISP           string        `json:"isp,omitempty"`
 	Org           string        `json:"org,omitempty"`
+	AS            string        `json:"as,omitempty"`
 	ASName        string        `json:"asname,omitempty"`
 	Mobile        bool          `json:"mobile,omitempty"`
 	Proxy         bool          `json:"proxy,omitempty"`
@@ -821,20 +825,48 @@ type SteamProfileResponse struct {
 }
 
 type SteamProfileData struct {
-	SteamID                  string        `json:"steam_id,omitempty"`
-	Username                 string        `json:"username,omitempty"`
-	ProfileURL               string        `json:"profile_url,omitempty"`
-	Avatar                   string        `json:"avatar,omitempty"`
-	PersonaState             int           `json:"persona_state,omitempty"`
-	CommunityVisibilityState int           `json:"community_visibility_state,omitempty"`
-	ProfileState             int           `json:"profile_state,omitempty"`
-	LastLogoff               int64         `json:"last_logoff,omitempty"`
-	TimeCreated              int64         `json:"time_created,omitempty"`
-	RealName                 string        `json:"real_name,omitempty"`
-	LocCountryCode           string        `json:"loc_country_code,omitempty"`
-	LocStateCode             string        `json:"loc_state_code,omitempty"`
-	LocCityID                int           `json:"loc_city_id,omitempty"`
-	Meta                     *ResponseMeta `json:"_meta,omitempty"`
+	Username string            `json:"username,omitempty"`
+	ID       string            `json:"id,omitempty"`
+	Avatar   string            `json:"avatar,omitempty"`
+	Meta     *SteamProfileMeta `json:"meta,omitempty"`
+	APIMeta  *ResponseMeta     `json:"_meta,omitempty"`
+
+	// Legacy flat fields kept for source compatibility with older SDK users.
+	SteamID                  string `json:"steam_id,omitempty"`
+	ProfileURL               string `json:"profile_url,omitempty"`
+	PersonaState             int    `json:"persona_state,omitempty"`
+	CommunityVisibilityState int    `json:"community_visibility_state,omitempty"`
+	ProfileState             int    `json:"profile_state,omitempty"`
+	LastLogoff               int64  `json:"last_logoff,omitempty"`
+	TimeCreated              int64  `json:"time_created,omitempty"`
+	RealName                 string `json:"real_name,omitempty"`
+	LocCountryCode           string `json:"loc_country_code,omitempty"`
+	LocStateCode             string `json:"loc_state_code,omitempty"`
+	LocCityID                int    `json:"loc_city_id,omitempty"`
+}
+
+type SteamProfileMeta struct {
+	Username string        `json:"username,omitempty"`
+	ID       string        `json:"id,omitempty"`
+	Avatar   string        `json:"avatar,omitempty"`
+	RawData  *SteamRawData `json:"raw_data,omitempty"`
+	Source   string        `json:"source,omitempty"`
+}
+
+type SteamRawData struct {
+	SteamID                  string `json:"steamid,omitempty"`
+	CommunityVisibilityState int    `json:"communityvisibilitystate,omitempty"`
+	ProfileState             int    `json:"profilestate,omitempty"`
+	PersonaName              string `json:"personaname,omitempty"`
+	ProfileURL               string `json:"profileurl,omitempty"`
+	Avatar                   string `json:"avatar,omitempty"`
+	AvatarMedium             string `json:"avatarmedium,omitempty"`
+	AvatarFull               string `json:"avatarfull,omitempty"`
+	AvatarHash               string `json:"avatarhash,omitempty"`
+	PersonaState             int    `json:"personastate,omitempty"`
+	PrimaryClanID            string `json:"primaryclanid,omitempty"`
+	TimeCreated              int64  `json:"timecreated,omitempty"`
+	PersonaStateFlags        int    `json:"personastateflags,omitempty"`
 }
 
 type XboxProfileResponse struct {
@@ -844,16 +876,64 @@ type XboxProfileResponse struct {
 }
 
 type XboxProfileData struct {
-	Username    string        `json:"username,omitempty"`
-	XUID        string        `json:"xuid,omitempty"`
-	Gamerscore  int           `json:"gamerscore,omitempty"`
-	AccountTier string        `json:"account_tier,omitempty"`
-	Tenure      string        `json:"tenure,omitempty"`
-	Bio         string        `json:"bio,omitempty"`
-	Location    string        `json:"location,omitempty"`
-	RealName    string        `json:"real_name,omitempty"`
-	Avatar      string        `json:"avatar,omitempty"`
-	Meta        *ResponseMeta `json:"_meta,omitempty"`
+	Username string           `json:"username,omitempty"`
+	ID       string           `json:"id,omitempty"`
+	Avatar   string           `json:"avatar,omitempty"`
+	Meta     *XboxProfileMeta `json:"meta,omitempty"`
+	APIMeta  *ResponseMeta    `json:"_meta,omitempty"`
+
+	// Legacy flat fields kept for source compatibility with older SDK users.
+	XUID        string `json:"xuid,omitempty"`
+	Gamerscore  int    `json:"gamerscore,omitempty"`
+	AccountTier string `json:"account_tier,omitempty"`
+	Tenure      string `json:"tenure,omitempty"`
+	Bio         string `json:"bio,omitempty"`
+	Location    string `json:"location,omitempty"`
+	RealName    string `json:"real_name,omitempty"`
+}
+
+type XboxProfileMeta struct {
+	ID          string           `json:"id,omitempty"`
+	Meta        *XboxMetaInfo    `json:"meta,omitempty"`
+	Username    string           `json:"username,omitempty"`
+	Avatar      string           `json:"avatar,omitempty"`
+	CachedAt    int64            `json:"cached_at,omitempty"`
+	ScraperData *XboxScraperData `json:"scraper_data,omitempty"`
+}
+
+type XboxMetaInfo struct {
+	Gamerscore       string `json:"gamerscore,omitempty"`
+	AccountTier      string `json:"accounttier,omitempty"`
+	XboxOneRep       string `json:"xboxonerep,omitempty"`
+	PreferredColor   string `json:"preferredcolor,omitempty"`
+	RealName         string `json:"realname,omitempty"`
+	Bio              string `json:"bio,omitempty"`
+	TenureLevel      string `json:"tenurelevel,omitempty"`
+	Watermarks       string `json:"watermarks,omitempty"`
+	Location         string `json:"location,omitempty"`
+	ShowUserAsAvatar string `json:"showuserasavatar,omitempty"`
+}
+
+type XboxScraperData struct {
+	BackgroundPictureURL string            `json:"background_picture_url,omitempty"`
+	Gamerscore           int               `json:"gamerscore,omitempty"`
+	GamesPlayed          int               `json:"games_played,omitempty"`
+	GameHistory          []XboxGameHistory `json:"game_history,omitempty"`
+}
+
+type XboxGameHistory struct {
+	Title                string            `json:"title,omitempty"`
+	CoverImage           string            `json:"coverImage,omitempty"`
+	LastPlayed           string            `json:"lastPlayed,omitempty"`
+	Platforms            []string          `json:"platforms,omitempty"`
+	ScoreDetails         *XboxScoreDetails `json:"scoreDetails,omitempty"`
+	CompletionPercentage int               `json:"completionPercentage,omitempty"`
+}
+
+type XboxScoreDetails struct {
+	Achieved             int `json:"achieved,omitempty"`
+	Total                int `json:"total,omitempty"`
+	AchievementsUnlocked int `json:"achievementsUnlocked,omitempty"`
 }
 
 type DiscordUserResponse struct {
@@ -863,19 +943,25 @@ type DiscordUserResponse struct {
 }
 
 type DiscordUserData struct {
-	ID            string        `json:"id,omitempty"`
-	Username      string        `json:"username,omitempty"`
-	GlobalName    string        `json:"global_name,omitempty"`
-	Avatar        string        `json:"avatar,omitempty"`
-	Discriminator string        `json:"discriminator,omitempty"`
-	PublicFlags   int           `json:"public_flags,omitempty"`
-	Flags         int           `json:"flags,omitempty"`
-	Banner        string        `json:"banner,omitempty"`
-	BannerColor   string        `json:"banner_color,omitempty"`
-	AccentColor   int           `json:"accent_color,omitempty"`
-	Bio           string        `json:"bio,omitempty"`
-	CreatedAt     string        `json:"created_at,omitempty"`
-	Meta          *ResponseMeta `json:"_meta,omitempty"`
+	ID           string        `json:"id,omitempty"`
+	Username     string        `json:"username,omitempty"`
+	GlobalName   string        `json:"global_name,omitempty"`
+	AvatarURL    string        `json:"avatar_url,omitempty"`
+	BannerURL    string        `json:"banner_url,omitempty"`
+	CreationDate string        `json:"creation_date,omitempty"`
+	Badges       []string      `json:"badges,omitempty"`
+	Meta         *ResponseMeta `json:"_meta,omitempty"`
+
+	// Legacy fields kept for source compatibility with older SDK users.
+	Avatar        string `json:"avatar,omitempty"`
+	Discriminator string `json:"discriminator,omitempty"`
+	PublicFlags   int    `json:"public_flags,omitempty"`
+	Flags         int    `json:"flags,omitempty"`
+	Banner        string `json:"banner,omitempty"`
+	BannerColor   string `json:"banner_color,omitempty"`
+	AccentColor   int    `json:"accent_color,omitempty"`
+	Bio           string `json:"bio,omitempty"`
+	CreatedAt     string `json:"created_at,omitempty"`
 }
 
 type DiscordUsernameHistoryResponse struct {
@@ -885,13 +971,22 @@ type DiscordUsernameHistoryResponse struct {
 }
 
 type DiscordUsernameHistoryData struct {
-	UserID  string                        `json:"user_id"`
-	History []DiscordUsernameHistoryEntry `json:"history"`
-	Meta    *ResponseMeta                 `json:"_meta,omitempty"`
+	Success     bool                          `json:"success,omitempty"`
+	Message     string                        `json:"message,omitempty"`
+	History     []DiscordUsernameHistoryEntry `json:"history"`
+	LookupsLeft *int                          `json:"lookups_left,omitempty"`
+	Meta        *ResponseMeta                 `json:"_meta,omitempty"`
+
+	// Legacy field kept for source compatibility with older SDK users.
+	UserID string `json:"user_id,omitempty"`
 }
 
 type DiscordUsernameHistoryEntry struct {
-	Username  string `json:"username"`
+	Name []string `json:"name,omitempty"`
+	Time []string `json:"time,omitempty"`
+
+	// Legacy fields kept for source compatibility with older SDK users.
+	Username  string `json:"username,omitempty"`
 	ChangedAt string `json:"changed_at,omitempty"`
 }
 
@@ -902,11 +997,20 @@ type DiscordToRobloxResponse struct {
 }
 
 type DiscordToRobloxData struct {
-	DiscordID      string        `json:"discord_id"`
-	RobloxID       string        `json:"roblox_id"`
-	RobloxUsername string        `json:"roblox_username,omitempty"`
-	Verified       bool          `json:"verified,omitempty"`
-	Meta           *ResponseMeta `json:"_meta,omitempty"`
+	RobloxID    string        `json:"roblox_id,omitempty"`
+	Name        string        `json:"name,omitempty"`
+	DisplayName string        `json:"displayName,omitempty"`
+	Created     string        `json:"created,omitempty"`
+	Description string        `json:"description,omitempty"`
+	Avatar      string        `json:"avatar,omitempty"`
+	Badges      []string      `json:"badges,omitempty"`
+	GroupCount  int           `json:"groupCount,omitempty"`
+	Meta        *ResponseMeta `json:"_meta,omitempty"`
+
+	// Legacy fields kept for source compatibility with older SDK users.
+	DiscordID      string `json:"discord_id,omitempty"`
+	RobloxUsername string `json:"roblox_username,omitempty"`
+	Verified       bool   `json:"verified,omitempty"`
 }
 
 type RobloxUserResponse struct {
@@ -916,14 +1020,22 @@ type RobloxUserResponse struct {
 }
 
 type RobloxUserData struct {
-	UserID           string        `json:"user_id,omitempty"`
-	Username         string        `json:"username,omitempty"`
-	DisplayName      string        `json:"display_name,omitempty"`
-	Description      string        `json:"description,omitempty"`
-	Created          string        `json:"created,omitempty"`
-	IsBanned         bool          `json:"is_banned,omitempty"`
-	HasVerifiedBadge bool          `json:"has_verified_badge,omitempty"`
-	Meta             *ResponseMeta `json:"_meta,omitempty"`
+	Username        string        `json:"username,omitempty"`
+	CurrentUsername string        `json:"Current Username,omitempty"`
+	OldUsernames    string        `json:"Old Usernames,omitempty"`
+	DisplayName     string        `json:"Display Name,omitempty"`
+	UserID          string        `json:"user_id,omitempty"`
+	UserIDAlt       string        `json:"User ID,omitempty"`
+	Discord         string        `json:"Discord,omitempty"`
+	JoinDate        string        `json:"Join Date,omitempty"`
+	AvatarURL       string        `json:"Avatar URL,omitempty"`
+	Meta            *ResponseMeta `json:"_meta,omitempty"`
+
+	// Legacy fields kept for source compatibility with older SDK users.
+	Description      string `json:"description,omitempty"`
+	Created          string `json:"created,omitempty"`
+	IsBanned         bool   `json:"is_banned,omitempty"`
+	HasVerifiedBadge bool   `json:"has_verified_badge,omitempty"`
 }
 
 type HoleheResponse struct {
@@ -939,16 +1051,21 @@ type HoleheData struct {
 }
 
 type GHuntResponse struct {
-	Success bool       `json:"success"`
-	Message string     `json:"message,omitempty"`
-	Data    *GHuntData `json:"data,omitempty"`
+	Success bool         `json:"success"`
+	Message string       `json:"message,omitempty"`
+	Data    *GHuntData   `json:"data,omitempty"`
+	Errors  *GHuntErrors `json:"errors,omitempty"`
 }
 
 type GHuntData struct {
-	Email   string        `json:"email"`
-	Found   bool          `json:"found"`
+	Status string           `json:"status,omitempty"`
+	Data   *GHuntNestedData `json:"data,omitempty"`
+	Meta   *ResponseMeta    `json:"_meta,omitempty"`
+
+	// Legacy fields kept for source compatibility with older SDK users.
+	Email   string        `json:"email,omitempty"`
+	Found   bool          `json:"found,omitempty"`
 	Profile *GHuntProfile `json:"profile,omitempty"`
-	Meta    *ResponseMeta `json:"_meta,omitempty"`
 }
 
 type GHuntProfile struct {
@@ -960,6 +1077,25 @@ type GHuntProfile struct {
 	CalendarID     string `json:"calendar_id,omitempty"`
 }
 
+type GHuntNestedData struct {
+	Profile     *GHuntOpenAPIProfile `json:"profile,omitempty"`
+	MapsReviews string               `json:"maps_reviews,omitempty"`
+	PhotosURL   string               `json:"photos_url,omitempty"`
+}
+
+type GHuntOpenAPIProfile struct {
+	Name           string `json:"Name,omitempty"`
+	ProfilePicture string `json:"Profile Picture,omitempty"`
+	GaiaID         string `json:"Gaia ID,omitempty"`
+	LastUpdate     string `json:"Last Update,omitempty"`
+}
+
+type GHuntErrors struct {
+	Error   string        `json:"error,omitempty"`
+	Details string        `json:"details,omitempty"`
+	Meta    *ResponseMeta `json:"_meta,omitempty"`
+}
+
 type ExtractSubdomainResponse struct {
 	Success bool                  `json:"success"`
 	Message string                `json:"message,omitempty"`
@@ -967,8 +1103,8 @@ type ExtractSubdomainResponse struct {
 }
 
 type ExtractSubdomainData struct {
-	Domain     string        `json:"domain"`
-	Subdomains []string      `json:"subdomains"`
+	Domain     string        `json:"domain,omitempty"`
+	Subdomains []interface{} `json:"subdomains"`
 	Count      int           `json:"count"`
 	Meta       *ResponseMeta `json:"_meta,omitempty"`
 }
@@ -987,8 +1123,11 @@ type MinecraftHistoryData struct {
 }
 
 type MinecraftHistoryEntry struct {
-	Name      string `json:"name"`
+	Username  string `json:"username,omitempty"`
 	ChangedAt string `json:"changed_at,omitempty"`
+
+	// Legacy field kept for source compatibility with older SDK users.
+	Name string `json:"name,omitempty"`
 }
 
 // ============================================

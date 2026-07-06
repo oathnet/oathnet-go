@@ -3,6 +3,7 @@ package oathnet
 import (
 	"encoding/json"
 	"net/url"
+	"strconv"
 )
 
 const (
@@ -139,6 +140,14 @@ type PhonebookOptions struct {
 	SearchID string
 }
 
+// SubdomainOptions contains options for V2 stealer subdomain extraction.
+type SubdomainOptions struct {
+	Query    string
+	Alive    *bool
+	IsAlive  *bool
+	SearchID string
+}
+
 // Search searches the V2 stealer database.
 func (s *StealerV2Service) Search(query string, opts *StealerSearchOptions) (*V2StealerResponse, error) {
 	params, err := buildStealerV2SearchParams(query, opts, true)
@@ -233,16 +242,33 @@ func (s *StealerV2Service) Phonebook(domain string, opts *PhonebookOptions) (*V2
 }
 
 // Subdomain extracts subdomains from stealer data.
-func (s *StealerV2Service) Subdomain(domain string, query string) (*SubdomainResponse, error) {
+func (s *StealerV2Service) Subdomain(domain string, query string, opts ...*SubdomainOptions) (*SubdomainResponse, error) {
 	params := url.Values{}
 	params.Set("domain", domain)
 	if query != "" {
 		params.Set("q", query)
 	}
+	if len(opts) > 0 && opts[0] != nil {
+		if opts[0].Query != "" {
+			params.Set("q", opts[0].Query)
+		}
+		if opts[0].Alive != nil {
+			params.Set("alive", strconv.FormatBool(*opts[0].Alive))
+		}
+		if opts[0].IsAlive != nil {
+			params.Set("is_alive", strconv.FormatBool(*opts[0].IsAlive))
+		}
+		addStringParam(params, "search_id", opts[0].SearchID)
+	}
 
 	var resp SubdomainResponse
 	err := s.client.get("/service/v2/stealer/subdomain", params, &resp)
 	return &resp, err
+}
+
+// ExtractSubdomainV2 is the operationId-compatible alias for Subdomain.
+func (s *StealerV2Service) ExtractSubdomainV2(domain string, opts *SubdomainOptions) (*SubdomainResponse, error) {
+	return s.Subdomain(domain, "", opts)
 }
 
 func buildInvestigationSearchParams(query string, opts *InvestigationSearchOptions) (url.Values, error) {
