@@ -491,17 +491,9 @@ var osintHoleheCmd = &cobra.Command{
 			if result.Data != nil {
 				fmt.Println("\nHolehe Results")
 				fmt.Printf("Email: %s\n", result.Data.Email)
-				found := 0
-				for _, d := range result.Data.Domains {
-					if d.Exists {
-						found++
-					}
-				}
-				fmt.Printf("Found on %d services:\n", found)
-				for _, d := range result.Data.Domains {
-					if d.Exists {
-						fmt.Printf("  + %s\n", d.Domain)
-					}
+				fmt.Printf("Found on %d services:\n", len(result.Data.Domains))
+				for _, domain := range result.Data.Domains {
+					fmt.Printf("  + %s\n", domain)
 				}
 			}
 		})

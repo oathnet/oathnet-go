@@ -163,13 +163,23 @@ history, err := client.OSINT.DiscordUsernameHistory("discord_id")
 roblox, err := client.OSINT.DiscordToRoblox("discord_id")
 
 // Roblox user (by username)
-robloxUser, err := client.OSINT.RobloxUserinfo("", "username")
+robloxUser, err := client.OSINT.RobloxUserinfo(oathnet.RobloxUserinfoOptions{
+    Username: "username",
+})
 
 // Holehe email check
 holehe, err := client.OSINT.Holehe("email@example.com")
 
+// Minecraft username history
+minecraft, err := client.OSINT.MinecraftHistory("username")
+
 // Subdomain extraction
-subdomains, err := client.OSINT.ExtractSubdomain("example.com")
+subdomains, err := client.OSINT.ExtractSubdomain("example.com", nil)
+
+// Optional search session ID
+ipInfo, err := client.OSINT.IPInfo("8.8.8.8", oathnet.OSINTOptions{
+    SearchID: "search_id",
+})
 ```
 
 #### V2 Stealer

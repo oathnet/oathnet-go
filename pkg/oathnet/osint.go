@@ -7,10 +7,24 @@ type OSINTService struct {
 	client *Client
 }
 
+// OSINTOptions contains optional query params shared by OSINT lookups.
+type OSINTOptions struct {
+	SearchID string
+}
+
+func applyOSINTOptions(params url.Values, opts []OSINTOptions) {
+	for _, opt := range opts {
+		if opt.SearchID != "" {
+			params.Set("search_id", opt.SearchID)
+		}
+	}
+}
+
 // IPInfo gets IP address information.
-func (s *OSINTService) IPInfo(ip string) (*IPInfoResponse, error) {
+func (s *OSINTService) IPInfo(ip string, opts ...OSINTOptions) (*IPInfoResponse, error) {
 	params := url.Values{}
 	params.Set("ip", ip)
+	applyOSINTOptions(params, opts)
 
 	var resp IPInfoResponse
 	err := s.client.get("/service/ip-info", params, &resp)
@@ -18,9 +32,10 @@ func (s *OSINTService) IPInfo(ip string) (*IPInfoResponse, error) {
 }
 
 // Steam gets Steam profile information.
-func (s *OSINTService) Steam(steamID string) (*SteamProfileResponse, error) {
+func (s *OSINTService) Steam(steamID string, opts ...OSINTOptions) (*SteamProfileResponse, error) {
 	params := url.Values{}
 	params.Set("steam_id", steamID)
+	applyOSINTOptions(params, opts)
 
 	var resp SteamProfileResponse
 	err := s.client.get("/service/steam", params, &resp)
@@ -28,9 +43,10 @@ func (s *OSINTService) Steam(steamID string) (*SteamProfileResponse, error) {
 }
 
 // Xbox gets Xbox Live profile information.
-func (s *OSINTService) Xbox(xblID string) (*XboxProfileResponse, error) {
+func (s *OSINTService) Xbox(xblID string, opts ...OSINTOptions) (*XboxProfileResponse, error) {
 	params := url.Values{}
 	params.Set("xbl_id", xblID)
+	applyOSINTOptions(params, opts)
 
 	var resp XboxProfileResponse
 	err := s.client.get("/service/xbox", params, &resp)
@@ -38,9 +54,10 @@ func (s *OSINTService) Xbox(xblID string) (*XboxProfileResponse, error) {
 }
 
 // DiscordUserinfo gets Discord user information.
-func (s *OSINTService) DiscordUserinfo(discordID string) (*DiscordUserResponse, error) {
+func (s *OSINTService) DiscordUserinfo(discordID string, opts ...OSINTOptions) (*DiscordUserResponse, error) {
 	params := url.Values{}
 	params.Set("discord_id", discordID)
+	applyOSINTOptions(params, opts)
 
 	var resp DiscordUserResponse
 	err := s.client.get("/service/discord-userinfo", params, &resp)
@@ -48,9 +65,10 @@ func (s *OSINTService) DiscordUserinfo(discordID string) (*DiscordUserResponse, 
 }
 
 // DiscordUsernameHistory gets Discord username history.
-func (s *OSINTService) DiscordUsernameHistory(discordID string) (*DiscordUsernameHistoryResponse, error) {
+func (s *OSINTService) DiscordUsernameHistory(discordID string, opts ...OSINTOptions) (*DiscordUsernameHistoryResponse, error) {
 	params := url.Values{}
 	params.Set("discord_id", discordID)
+	applyOSINTOptions(params, opts)
 
 	var resp DiscordUsernameHistoryResponse
 	err := s.client.get("/service/discord-username-history", params, &resp)
@@ -58,9 +76,10 @@ func (s *OSINTService) DiscordUsernameHistory(discordID string) (*DiscordUsernam
 }
 
 // DiscordToRoblox gets Roblox account linked to Discord.
-func (s *OSINTService) DiscordToRoblox(discordID string) (*DiscordToRobloxResponse, error) {
+func (s *OSINTService) DiscordToRoblox(discordID string, opts ...OSINTOptions) (*DiscordToRobloxResponse, error) {
 	params := url.Values{}
 	params.Set("discord_id", discordID)
+	applyOSINTOptions(params, opts)
 
 	var resp DiscordToRobloxResponse
 	err := s.client.get("/service/discord-to-roblox", params, &resp)
@@ -71,6 +90,7 @@ func (s *OSINTService) DiscordToRoblox(discordID string) (*DiscordToRobloxRespon
 type RobloxUserinfoOptions struct {
 	UserID   string
 	Username string
+	SearchID string
 }
 
 // RobloxUserinfo gets Roblox user information.
@@ -82,6 +102,9 @@ func (s *OSINTService) RobloxUserinfo(opts RobloxUserinfoOptions) (*RobloxUserRe
 	if opts.Username != "" {
 		params.Set("username", opts.Username)
 	}
+	if opts.SearchID != "" {
+		params.Set("search_id", opts.SearchID)
+	}
 
 	var resp RobloxUserResponse
 	err := s.client.get("/service/roblox-userinfo", params, &resp)
@@ -89,9 +112,10 @@ func (s *OSINTService) RobloxUserinfo(opts RobloxUserinfoOptions) (*RobloxUserRe
 }
 
 // Holehe checks email account existence across services.
-func (s *OSINTService) Holehe(email string) (*HoleheResponse, error) {
+func (s *OSINTService) Holehe(email string, opts ...OSINTOptions) (*HoleheResponse, error) {
 	params := url.Values{}
 	params.Set("email", email)
+	applyOSINTOptions(params, opts)
 
 	var resp HoleheResponse
 	err := s.client.get("/service/holehe", params, &resp)
@@ -99,9 +123,10 @@ func (s *OSINTService) Holehe(email string) (*HoleheResponse, error) {
 }
 
 // GHunt gets Google account information.
-func (s *OSINTService) GHunt(email string) (*GHuntResponse, error) {
+func (s *OSINTService) GHunt(email string, opts ...OSINTOptions) (*GHuntResponse, error) {
 	params := url.Values{}
 	params.Set("email", email)
+	applyOSINTOptions(params, opts)
 
 	var resp GHuntResponse
 	err := s.client.get("/service/ghunt", params, &resp)
@@ -109,7 +134,7 @@ func (s *OSINTService) GHunt(email string) (*GHuntResponse, error) {
 }
 
 // ExtractSubdomain extracts subdomains for a domain.
-func (s *OSINTService) ExtractSubdomain(domain string, isAlive *bool) (*ExtractSubdomainResponse, error) {
+func (s *OSINTService) ExtractSubdomain(domain string, isAlive *bool, opts ...OSINTOptions) (*ExtractSubdomainResponse, error) {
 	params := url.Values{}
 	params.Set("domain", domain)
 	if isAlive != nil {
@@ -119,6 +144,7 @@ func (s *OSINTService) ExtractSubdomain(domain string, isAlive *bool) (*ExtractS
 			params.Set("is_alive", "false")
 		}
 	}
+	applyOSINTOptions(params, opts)
 
 	var resp ExtractSubdomainResponse
 	err := s.client.get("/service/extract-subdomain", params, &resp)
@@ -126,11 +152,12 @@ func (s *OSINTService) ExtractSubdomain(domain string, isAlive *bool) (*ExtractS
 }
 
 // MinecraftHistory gets Minecraft username history.
-func (s *OSINTService) MinecraftHistory(username string) (*MinecraftHistoryResponse, error) {
+func (s *OSINTService) MinecraftHistory(username string, opts ...OSINTOptions) (*MinecraftHistoryResponse, error) {
 	params := url.Values{}
 	params.Set("username", username)
+	applyOSINTOptions(params, opts)
 
 	var resp MinecraftHistoryResponse
-	err := s.client.get("/service/minecraft-history", params, &resp)
+	err := s.client.get("/service/mc-history", params, &resp)
 	return &resp, err
 }
