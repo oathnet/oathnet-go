@@ -679,6 +679,45 @@ func TestVictimsService_PropertiesSearchAndDetailRequestConstruction(t *testing.
 	}
 }
 
+func TestVictimsService_GetPropertiesAcceptsUnwrappedData(t *testing.T) {
+	var gotPath string
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.EscapedPath()
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{
+			"items": [{"log_id":"log-1","property_id":"prop-1","property_type":"account","service":"discord"}],
+			"meta": {"total": 1, "count": 1, "took_ms": 7},
+			"next_cursor": "next-props",
+			"policy_redacted": true
+		}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient("test-key", WithBaseURL(server.URL))
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+
+	resp, err := client.Victims.GetVictimPropertiesV2("log/with space", &VictimPropertiesSearchOptions{PageSize: 5})
+	if err != nil {
+		t.Fatalf("GetVictimPropertiesV2() error = %v", err)
+	}
+	if gotPath != "/service/v2/victims/log%2Fwith%20space/properties" {
+		t.Fatalf("path = %s, want escaped victim properties path", gotPath)
+	}
+	if resp == nil || !resp.Success || resp.Data == nil {
+		t.Fatalf("unexpected response: %#v", resp)
+	}
+	if resp.Data.NextCursor != "next-props" || !resp.Data.PolicyRedacted {
+		t.Fatalf("unexpected response data: %#v", resp.Data)
+	}
+	if len(resp.Data.Items) != 1 || resp.Data.Items[0].PropertyID != "prop-1" {
+		t.Fatalf("unexpected items: %#v", resp.Data.Items)
+	}
+}
+
 func TestVictimsService_SummaryCookiesAndDomainRequestConstruction(t *testing.T) {
 	includeItems := false
 

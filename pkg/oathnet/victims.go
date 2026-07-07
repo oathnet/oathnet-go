@@ -259,9 +259,12 @@ func (s *VictimsService) SearchVictimPropertiesV2Post(body *V2VictimPropertiesSe
 func (s *VictimsService) GetProperties(logID string, opts *VictimPropertiesSearchOptions) (*V2VictimPropertiesSearchResponse, error) {
 	params := buildVictimPropertiesSearchParams(opts, false)
 
-	var resp V2VictimPropertiesSearchResponse
-	err := s.client.get(victimV2Path(logID, victimPropertiesPathSuffix), params, &resp)
-	return &resp, err
+	var rawResp map[string]interface{}
+	err := s.client.get(victimV2Path(logID, victimPropertiesPathSuffix), params, &rawResp)
+	if err != nil {
+		return nil, err
+	}
+	return decodeV2VictimPropertiesSearchResponse(rawResp)
 }
 
 // GetVictimPropertiesV2 is an operation-id alias for GetProperties.
@@ -431,6 +434,26 @@ func decodeV2VictimsResponse(rawResp map[string]interface{}) (*V2VictimsResponse
 	}
 
 	resp.Data = &V2VictimsData{}
+	if err := json.Unmarshal(jsonData, resp.Data); err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func decodeV2VictimPropertiesSearchResponse(rawResp map[string]interface{}) (*V2VictimPropertiesSearchResponse, error) {
+	resp := &V2VictimPropertiesSearchResponse{Success: true}
+	jsonData, err := json.Marshal(rawResp)
+	if err != nil {
+		return nil, err
+	}
+	if _, ok := rawResp["success"]; ok {
+		if err := json.Unmarshal(jsonData, resp); err != nil {
+			return nil, err
+		}
+		return resp, nil
+	}
+
+	resp.Data = &V2VictimPropertiesSearchData{}
 	if err := json.Unmarshal(jsonData, resp.Data); err != nil {
 		return nil, err
 	}

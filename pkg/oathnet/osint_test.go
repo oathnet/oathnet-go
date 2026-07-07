@@ -204,7 +204,7 @@ func TestOSINTService_OpenAPIResponseDecoding(t *testing.T) {
 		case "/service/discord-username-history":
 			_, _ = w.Write([]byte(`{"success":true,"data":{"success":true,"message":"Found.","history":[{"name":["alice"],"time":["2026-01-01T00:00:00Z"]}],"lookups_left":9}}`))
 		case "/service/discord-to-roblox":
-			_, _ = w.Write([]byte(`{"success":true,"data":{"roblox_id":"1","name":"builderman","displayName":"Builder","created":"2006-01-01T00:00:00Z","description":"profile","avatar":"https://example.com/r.png","badges":["Admin"],"groupCount":3}}`))
+			_, _ = w.Write([]byte(`{"success":true,"data":{"discord_id":"123456789012345678","roblox_id":"1","name":"builderman","displayName":"Builder","created":"2006-01-01T00:00:00Z","description":"profile","avatar":"https://example.com/r.png","badges":["Admin"],"groupCount":3,"cached":false,"disabled":true,"skipped":true,"results_found":0}}`))
 		case "/service/roblox-userinfo":
 			_, _ = w.Write([]byte(`{"success":true,"data":{"username":"builderman","Current Username":"builderman","Old Usernames":"None","Display Name":"Builder","user_id":"1","User ID":"1","Discord":"N/A","Join Date":"2006-01-01T00:00:00Z","Avatar URL":"https://example.com/r.png"}}`))
 		case "/service/holehe":
@@ -270,7 +270,7 @@ func TestOSINTService_OpenAPIResponseDecoding(t *testing.T) {
 	if err != nil {
 		t.Fatalf("DiscordToRoblox() error = %v", err)
 	}
-	if linked.Data == nil || linked.Data.Name != "builderman" || linked.Data.GroupCount != 3 {
+	if linked.Data == nil || linked.Data.Name != "builderman" || linked.Data.GroupCount != 3 || !linked.Data.Disabled || !linked.Data.Skipped || linked.Data.ResultsFound != 0 || linked.Data.DiscordID == "" {
 		t.Fatalf("unexpected DiscordToRoblox response: %#v", linked.Data)
 	}
 

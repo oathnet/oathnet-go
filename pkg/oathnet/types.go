@@ -456,11 +456,11 @@ type V2InvestigationSearchData struct {
 }
 
 type V2InvestigationSections struct {
-	Credentials        *V2StealerData                    `json:"credentials,omitempty"`
-	Victims            *V2VictimsData                    `json:"victims,omitempty"`
-	Evidence           *V2VictimPropertiesSearchData     `json:"evidence,omitempty"`
-	Files              *V2FileMetadataSearchData         `json:"files,omitempty"`
-	RelatedCredentials *V2StealerData                    `json:"related_credentials,omitempty"`
+	Credentials        *V2StealerData                `json:"credentials,omitempty"`
+	Victims            *V2VictimsData                `json:"victims,omitempty"`
+	Evidence           *V2VictimPropertiesSearchData `json:"evidence,omitempty"`
+	Files              *V2FileMetadataSearchData     `json:"files,omitempty"`
+	RelatedCredentials *V2StealerData                `json:"related_credentials,omitempty"`
 }
 
 type V2InvestigationLinkEndpoint struct {
@@ -1230,6 +1230,10 @@ type DiscordToRobloxData struct {
 	DiscordID      string `json:"discord_id,omitempty"`
 	RobloxUsername string `json:"roblox_username,omitempty"`
 	Verified       bool   `json:"verified,omitempty"`
+	Cached         bool   `json:"cached,omitempty"`
+	Disabled       bool   `json:"disabled,omitempty"`
+	Skipped        bool   `json:"skipped,omitempty"`
+	ResultsFound   int    `json:"results_found,omitempty"`
 }
 
 type RobloxUserResponse struct {
