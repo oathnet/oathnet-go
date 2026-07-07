@@ -361,35 +361,38 @@ func TestStealerV2Service_GetPhonebookRequestConstruction(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(`{
-			"domain": "example.com",
-			"subdomains": ["accounts.example.com", "mail.example.com"],
-			"subdomain_results": [{
-				"domain": "accounts.example.com",
-				"count": 4,
-				"latest_pwned_at": "2026-03-20T12:00:00Z",
-				"latest_indexed_at": "2026-03-21T12:00:00Z",
-				"redacted": false
-			}],
-			"emails": [{
-				"email": "alice@example.com",
-				"count": 3,
-				"stealer_count": 2,
-				"breach_result_count": 1,
-				"breach_count": 1,
-				"latest_pwned_at": "2026-03-20T12:00:00Z",
-				"latest_indexed_at": "2026-03-21T12:00:00Z",
-				"redacted": false
-			}],
-			"count": 12,
-			"email_count": 7,
-			"policy_redacted": true,
-			"upgrade_required": true,
-			"redaction_marker": "upgrade",
-			"message": "limited",
-			"visible_subdomain_limit": 2,
-			"visible_email_limit": 1,
-			"redacted_subdomain_count": 10,
-			"redacted_email_count": 6
+			"success": true,
+			"message": "V2-Phonebook completed successfully",
+			"data": {
+				"domain": "example.com",
+				"subdomains": ["accounts.example.com", "mail.example.com"],
+				"subdomain_results": [{
+					"domain": "accounts.example.com",
+					"count": 4,
+					"latest_pwned_at": "2026-03-20T12:00:00Z",
+					"latest_indexed_at": "2026-03-21T12:00:00Z",
+					"redacted": false
+				}],
+				"emails": [{
+					"email": "alice@example.com",
+					"count": 3,
+					"stealer_count": 2,
+					"breach_result_count": 1,
+					"breach_count": 1,
+					"latest_pwned_at": "2026-03-20T12:00:00Z",
+					"latest_indexed_at": "2026-03-21T12:00:00Z",
+					"redacted": false
+				}],
+				"count": 12,
+				"email_count": 7,
+				"policy_redacted": true,
+				"upgrade_required": true,
+				"redaction_marker": "upgrade",
+				"visible_subdomain_limit": 2,
+				"visible_email_limit": 1,
+				"redacted_subdomain_count": 10,
+				"redacted_email_count": 6
+			}
 		}`))
 	}))
 	defer server.Close()
@@ -437,19 +440,19 @@ func TestStealerV2Service_GetPhonebookRequestConstruction(t *testing.T) {
 		}
 	}
 
-	if resp == nil || resp.Domain != "example.com" || resp.Count != 12 || resp.EmailCount != 7 {
+	if resp == nil || !resp.Success || resp.Data == nil || resp.Data.Domain != "example.com" || resp.Data.Count != 12 || resp.Data.EmailCount != 7 {
 		t.Fatalf("unexpected phonebook response: %#v", resp)
 	}
-	if len(resp.SubdomainResults) != 1 || resp.SubdomainResults[0].Domain != "accounts.example.com" || resp.SubdomainResults[0].Count != 4 {
-		t.Fatalf("unexpected subdomain results: %#v", resp.SubdomainResults)
+	if len(resp.Data.SubdomainResults) != 1 || resp.Data.SubdomainResults[0].Domain != "accounts.example.com" || resp.Data.SubdomainResults[0].Count != 4 {
+		t.Fatalf("unexpected subdomain results: %#v", resp.Data.SubdomainResults)
 	}
-	if len(resp.Emails) != 1 || resp.Emails[0].Email != "alice@example.com" || resp.Emails[0].StealerCount != 2 || resp.Emails[0].BreachResultCount != 1 {
-		t.Fatalf("unexpected emails: %#v", resp.Emails)
+	if len(resp.Data.Emails) != 1 || resp.Data.Emails[0].Email != "alice@example.com" || resp.Data.Emails[0].StealerCount != 2 || resp.Data.Emails[0].BreachResultCount != 1 {
+		t.Fatalf("unexpected emails: %#v", resp.Data.Emails)
 	}
-	if resp.VisibleSubdomainLimit == nil || *resp.VisibleSubdomainLimit != 2 || resp.VisibleEmailLimit == nil || *resp.VisibleEmailLimit != 1 {
-		t.Fatalf("unexpected visible limits: %#v %#v", resp.VisibleSubdomainLimit, resp.VisibleEmailLimit)
+	if resp.Data.VisibleSubdomainLimit == nil || *resp.Data.VisibleSubdomainLimit != 2 || resp.Data.VisibleEmailLimit == nil || *resp.Data.VisibleEmailLimit != 1 {
+		t.Fatalf("unexpected visible limits: %#v %#v", resp.Data.VisibleSubdomainLimit, resp.Data.VisibleEmailLimit)
 	}
-	if !resp.PolicyRedacted || !resp.UpgradeRequired || resp.RedactionMarker != "upgrade" || resp.RedactedEmailCount != 6 {
+	if !resp.Data.PolicyRedacted || !resp.Data.UpgradeRequired || resp.Data.RedactionMarker != "upgrade" || resp.Data.RedactedEmailCount != 6 {
 		t.Fatalf("unexpected redaction metadata: %#v", resp)
 	}
 }

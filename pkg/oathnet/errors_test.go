@@ -62,3 +62,24 @@ func TestErrorTypeAssertion(t *testing.T) {
 		t.Logf("Got error type: %T", err)
 	}
 }
+
+func TestParseErrorPreservesValidationDetails(t *testing.T) {
+	client, _ := NewClient("test-key")
+	err := client.parseError(400, []byte(`{
+		"message": "Validation error",
+		"errors": {
+			"include": ["Invalid include section: credentials,victims"]
+		}
+	}`))
+
+	validationErr, ok := err.(*ValidationError)
+	if !ok {
+		t.Fatalf("expected ValidationError, got %T", err)
+	}
+	if validationErr.Details["include"] == nil {
+		t.Fatalf("expected include details, got %#v", validationErr.Details)
+	}
+	if !strings.Contains(validationErr.Error(), "credentials,victims") {
+		t.Fatalf("expected formatted details in error string, got %q", validationErr.Error())
+	}
+}

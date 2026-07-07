@@ -443,12 +443,16 @@ func TestVictimsService_FileMetadataSearchRequestConstruction(t *testing.T) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
 				_, _ = w.Write([]byte(`{
-					"items": [{"log_id":"log-1","file_id":"file-1","name":"Cookies.txt","folder":"Browser","path":"Browser/Cookies.txt","ext":"txt","kind":"cookies","size_bytes":1234}],
-					"meta": {"total": 1, "count": 1, "took_ms": 3},
-					"next_cursor": "next-file",
-					"policy_redacted": true,
-					"upgrade_required": true,
-					"redaction_marker": "upgrade"
+					"success": true,
+					"message": "V2-File-Metadata-Search completed successfully",
+					"data": {
+						"items": [{"log_id":"log-1","file_id":"file-1","name":"Cookies.txt","folder":"Browser","path":"Browser/Cookies.txt","ext":"txt","kind":"cookies","size_bytes":1234}],
+						"meta": {"total": 1, "count": 1, "took_ms": 3},
+						"next_cursor": "next-file",
+						"policy_redacted": true,
+						"upgrade_required": true,
+						"redaction_marker": "upgrade"
+					}
 				}`))
 			}))
 			defer server.Close()
@@ -474,11 +478,11 @@ func TestVictimsService_FileMetadataSearchRequestConstruction(t *testing.T) {
 			if !reflect.DeepEqual(gotBody, tt.wantBody) {
 				t.Fatalf("body = %#v, want %#v", gotBody, tt.wantBody)
 			}
-			if resp == nil || resp.NextCursor != "next-file" || !resp.PolicyRedacted || !resp.UpgradeRequired {
+			if resp == nil || !resp.Success || resp.Data == nil || resp.Data.NextCursor != "next-file" || !resp.Data.PolicyRedacted || !resp.Data.UpgradeRequired {
 				t.Fatalf("unexpected response: %#v", resp)
 			}
-			if len(resp.Items) != 1 || resp.Items[0].FileID != "file-1" || resp.Items[0].SizeBytes != 1234 {
-				t.Fatalf("unexpected items: %#v", resp.Items)
+			if len(resp.Data.Items) != 1 || resp.Data.Items[0].FileID != "file-1" || resp.Data.Items[0].SizeBytes != 1234 {
+				t.Fatalf("unexpected items: %#v", resp.Data.Items)
 			}
 		})
 	}
@@ -627,12 +631,16 @@ func TestVictimsService_PropertiesSearchAndDetailRequestConstruction(t *testing.
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
 				_, _ = w.Write([]byte(`{
-					"items": [{"log_id":"log-1","property_id":"prop-1","property_type":"account","service":"discord","identity_kind":"user","account_id":"account-1","username":"alice","display_name":"Alice","value":"alice@example.com","domain":"example.com","active":false,"source_type":"cookies","source_path":"Cookies.txt","source_file_id":"file-1","confidence":0.99,"confidence_label":"high","confidence_score":99,"indexed_at":"2026-07-06T00:00:00Z"}],
-					"meta": {"total": 1, "count": 1, "took_ms": 7},
-					"next_cursor": "next-props",
-					"policy_redacted": true,
-					"upgrade_required": true,
-					"redaction_marker": "upgrade"
+					"success": true,
+					"message": "V2-Victim-Properties-Search completed successfully",
+					"data": {
+						"items": [{"log_id":"log-1","property_id":"prop-1","property_type":"account","service":"discord","identity_kind":"user","account_id":"account-1","username":"alice","display_name":"Alice","value":"alice@example.com","domain":"example.com","active":false,"source_type":"cookies","source_path":"Cookies.txt","source_file_id":"file-1","confidence":0.99,"confidence_label":"high","confidence_score":99,"indexed_at":"2026-07-06T00:00:00Z"}],
+						"meta": {"total": 1, "count": 1, "took_ms": 7},
+						"next_cursor": "next-props",
+						"policy_redacted": true,
+						"upgrade_required": true,
+						"redaction_marker": "upgrade"
+					}
 				}`))
 			}))
 			defer server.Close()
@@ -661,11 +669,11 @@ func TestVictimsService_PropertiesSearchAndDetailRequestConstruction(t *testing.
 			if !reflect.DeepEqual(gotBody, tt.wantBody) {
 				t.Fatalf("body = %#v, want %#v", gotBody, tt.wantBody)
 			}
-			if resp == nil || resp.NextCursor != "next-props" || !resp.PolicyRedacted || !resp.UpgradeRequired {
+			if resp == nil || !resp.Success || resp.Data == nil || resp.Data.NextCursor != "next-props" || !resp.Data.PolicyRedacted || !resp.Data.UpgradeRequired {
 				t.Fatalf("unexpected response: %#v", resp)
 			}
-			if len(resp.Items) != 1 || resp.Items[0].PropertyID != "prop-1" || resp.Items[0].ConfidenceLabel != "high" {
-				t.Fatalf("unexpected items: %#v", resp.Items)
+			if len(resp.Data.Items) != 1 || resp.Data.Items[0].PropertyID != "prop-1" || resp.Data.Items[0].ConfidenceLabel != "high" {
+				t.Fatalf("unexpected items: %#v", resp.Data.Items)
 			}
 		})
 	}

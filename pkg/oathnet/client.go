@@ -231,14 +231,21 @@ func (c *Client) handleResponse(resp *http.Response, result interface{}) error {
 
 func (c *Client) parseError(statusCode int, body []byte) error {
 	var errResp struct {
-		Message string `json:"message"`
-		Error   string `json:"error"`
+		Message string                 `json:"message"`
+		Error   string                 `json:"error"`
+		Detail  interface{}            `json:"detail"`
+		Errors  map[string]interface{} `json:"errors"`
 	}
 	json.Unmarshal(body, &errResp)
 
 	message := errResp.Message
 	if message == "" {
 		message = errResp.Error
+	}
+	if message == "" {
+		if detail, ok := errResp.Detail.(string); ok {
+			message = detail
+		}
 	}
 	if message == "" {
 		message = string(body)
@@ -252,18 +259,18 @@ func (c *Client) parseError(statusCode int, body []byte) error {
 		if containsAuthMessage(message) {
 			return &AuthenticationError{Message: message}
 		}
-		return &ValidationError{Message: message}
+		return &ValidationError{Message: message, Details: errResp.Errors}
 	case 404:
 		return &NotFoundError{Message: message}
 	case 429:
 		return &RateLimitError{Message: message}
 	default:
-		return &OathNetError{Message: message, StatusCode: statusCode}
+		return &OathNetError{Message: message, StatusCode: statusCode, Details: errResp.Errors}
 	}
 }
 
 func containsAuthMessage(msg string) bool {
-	return contains(msg, "credentials") || contains(msg, "api key") || contains(msg, "invalid api key")
+	return contains(msg, "api key") || contains(msg, "invalid api key")
 }
 
 func contains(s, substr string) bool {

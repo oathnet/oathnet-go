@@ -1,6 +1,57 @@
 package oathnet
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"strings"
+)
+
+// FlexibleString accepts legacy result fields that can arrive as either a
+// scalar string or a list of strings from heterogeneous breach sources.
+type FlexibleString string
+
+func (v *FlexibleString) UnmarshalJSON(data []byte) error {
+	if string(data) == "null" {
+		*v = ""
+		return nil
+	}
+	var scalar string
+	if err := json.Unmarshal(data, &scalar); err == nil {
+		*v = FlexibleString(scalar)
+		return nil
+	}
+	var list []string
+	if err := json.Unmarshal(data, &list); err == nil {
+		*v = FlexibleString(strings.Join(list, ","))
+		return nil
+	}
+	return nil
+}
+
+// FlexibleStringList accepts fields that are usually arrays but can arrive as a
+// scalar string in legacy stealer search results.
+type FlexibleStringList []string
+
+func (v *FlexibleStringList) UnmarshalJSON(data []byte) error {
+	if string(data) == "null" {
+		*v = nil
+		return nil
+	}
+	var scalar string
+	if err := json.Unmarshal(data, &scalar); err == nil {
+		if scalar == "" {
+			*v = nil
+		} else {
+			*v = []string{scalar}
+		}
+		return nil
+	}
+	var list []string
+	if err := json.Unmarshal(data, &list); err == nil {
+		*v = list
+		return nil
+	}
+	return nil
+}
 
 // ResponseMeta contains metadata about the API response.
 type ResponseMeta struct {
@@ -112,8 +163,8 @@ type BreachSearchData struct {
 
 type BreachResult struct {
 	ID           string                 `json:"id,omitempty"`
-	DBName       string                 `json:"dbname,omitempty"`
-	Email        string                 `json:"email,omitempty"`
+	DBName       FlexibleString         `json:"dbname,omitempty"`
+	Email        FlexibleString         `json:"email,omitempty"`
 	Username     interface{}            `json:"username,omitempty"` // Can be string or []string
 	Password     string                 `json:"password,omitempty"`
 	PasswordHash string                 `json:"password_hash,omitempty"`
@@ -130,7 +181,7 @@ type BreachResult struct {
 	Gender       string                 `json:"gender,omitempty"`
 	Language     string                 `json:"language,omitempty"`
 	CreatedAt    string                 `json:"created_at,omitempty"`
-	IP           string                 `json:"ip,omitempty"`
+	IP           FlexibleString         `json:"ip,omitempty"`
 	Version      int64                  `json:"_version_,omitempty"`
 	Extra        map[string]interface{} `json:"-"`
 }
@@ -215,13 +266,13 @@ type StealerSearchData struct {
 type StealerResult struct {
 	ID        string                 `json:"id,omitempty"`
 	LOG       string                 `json:"LOG,omitempty"`
-	Domain    []string               `json:"domain,omitempty"`
-	Subdomain []string               `json:"subdomain,omitempty"`
-	Path      []string               `json:"path,omitempty"`
-	Email     []string               `json:"email,omitempty"`
-	Username  []string               `json:"username,omitempty"`
-	Password  []string               `json:"password,omitempty"`
-	URL       []string               `json:"url,omitempty"`
+	Domain    FlexibleStringList     `json:"domain,omitempty"`
+	Subdomain FlexibleStringList     `json:"subdomain,omitempty"`
+	Path      FlexibleStringList     `json:"path,omitempty"`
+	Email     FlexibleStringList     `json:"email,omitempty"`
+	Username  FlexibleStringList     `json:"username,omitempty"`
+	Password  FlexibleStringList     `json:"password,omitempty"`
+	URL       FlexibleStringList     `json:"url,omitempty"`
 	IP        string                 `json:"ip,omitempty"`
 	Country   string                 `json:"country,omitempty"`
 	Version   int64                  `json:"_version_,omitempty"`
@@ -391,9 +442,9 @@ type V2InvestigationSearchData struct {
 	Sections           *V2InvestigationSections               `json:"sections,omitempty"`
 	Credentials        *V2StealerData                         `json:"credentials,omitempty"`
 	Victims            *V2VictimsData                         `json:"victims,omitempty"`
-	Evidence           *V2VictimPropertiesSearchResponse      `json:"evidence,omitempty"`
-	Properties         *V2VictimPropertiesSearchResponse      `json:"properties,omitempty"`
-	Files              *V2FileMetadataSearchResponse          `json:"files,omitempty"`
+	Evidence           *V2VictimPropertiesSearchData          `json:"evidence,omitempty"`
+	Properties         *V2VictimPropertiesSearchData          `json:"properties,omitempty"`
+	Files              *V2FileMetadataSearchData              `json:"files,omitempty"`
 	RelatedCredentials *V2StealerData                         `json:"related_credentials,omitempty"`
 	Links              []V2InvestigationLink                  `json:"links,omitempty"`
 	Relations          []V2InvestigationRelation              `json:"relations,omitempty"`
@@ -407,8 +458,8 @@ type V2InvestigationSearchData struct {
 type V2InvestigationSections struct {
 	Credentials        *V2StealerData                    `json:"credentials,omitempty"`
 	Victims            *V2VictimsData                    `json:"victims,omitempty"`
-	Evidence           *V2VictimPropertiesSearchResponse `json:"evidence,omitempty"`
-	Files              *V2FileMetadataSearchResponse     `json:"files,omitempty"`
+	Evidence           *V2VictimPropertiesSearchData     `json:"evidence,omitempty"`
+	Files              *V2FileMetadataSearchData         `json:"files,omitempty"`
 	RelatedCredentials *V2StealerData                    `json:"related_credentials,omitempty"`
 }
 
@@ -459,6 +510,13 @@ type V2InvestigationIntersection struct {
 }
 
 type V2PhonebookResponse struct {
+	Success bool             `json:"success"`
+	Message string           `json:"message,omitempty"`
+	Data    *V2PhonebookData `json:"data,omitempty"`
+	Meta    *ResponseMeta    `json:"_meta,omitempty"`
+}
+
+type V2PhonebookData struct {
 	Domain                 string                        `json:"domain,omitempty"`
 	Subdomains             []string                      `json:"subdomains,omitempty"`
 	SubdomainResults       []V2PhonebookSubdomainInsight `json:"subdomain_results,omitempty"`
@@ -658,6 +716,13 @@ type VictimManifestNode struct {
 }
 
 type V2FileMetadataSearchResponse struct {
+	Success bool                      `json:"success"`
+	Message string                    `json:"message,omitempty"`
+	Data    *V2FileMetadataSearchData `json:"data,omitempty"`
+	Meta    *ResponseMeta             `json:"_meta,omitempty"`
+}
+
+type V2FileMetadataSearchData struct {
 	Items           []V2FileMetadataResult `json:"items"`
 	Meta            *V2SearchMeta          `json:"meta,omitempty"`
 	NextCursor      string                 `json:"next_cursor,omitempty"`
@@ -678,6 +743,13 @@ type V2FileMetadataResult struct {
 }
 
 type V2VictimPropertiesSearchResponse struct {
+	Success bool                          `json:"success"`
+	Message string                        `json:"message,omitempty"`
+	Data    *V2VictimPropertiesSearchData `json:"data,omitempty"`
+	Meta    *ResponseMeta                 `json:"_meta,omitempty"`
+}
+
+type V2VictimPropertiesSearchData struct {
 	Items           []V2VictimPropertyResult `json:"items"`
 	Meta            *V2SearchMeta            `json:"meta,omitempty"`
 	NextCursor      string                   `json:"next_cursor,omitempty"`

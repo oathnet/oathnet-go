@@ -258,12 +258,11 @@ result, err := client.FileSearch.Search("api_key", &oathnet.FileSearchCreateOpti
 
 ```go
 // Create export
-job, err := client.Exports.Create(&oathnet.ExportCreateOptions{
-    ExportType: "docs",  // "docs" or "victims"
-    Format:     "csv",   // "csv" or "jsonl"
-    Limit:      1000,
-    Fields:     []string{"email", "password", "domain"},
-    Search:     map[string]interface{}{"query": "example.com"},
+job, err := client.Exports.Create("docs", &oathnet.ExportCreateOptions{
+    Format: "csv", // "csv" or "jsonl"
+    Limit:  1000,
+    Fields: []string{"email", "domain"},
+    Search: map[string]interface{}{"query": "example.com"},
 })
 
 // Wait for completion
@@ -274,10 +273,10 @@ result, err := client.Exports.WaitForCompletion(
 )
 
 // Download as bytes
-data, err := client.Exports.Download(job.Data.JobID)
+data, err := client.Exports.DownloadBytes(job.Data.JobID)
 
 // Or download to file
-err := client.Exports.DownloadToFile(job.Data.JobID, "export.csv")
+err := client.Exports.Download(job.Data.JobID, "export.csv")
 ```
 
 ### Error Handling
@@ -311,7 +310,7 @@ if err != nil {
 oathnet --api-key KEY --format json|table|raw COMMAND
 
 # Search commands
-oathnet search breach -q "query" [--page N] [--limit N] [--dbnames name]
+oathnet search breach -q "query" [--cursor CURSOR] [--dbnames name]
 oathnet search stealer -q "query"
 oathnet search init -q "query"
 
