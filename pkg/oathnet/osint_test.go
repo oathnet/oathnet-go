@@ -202,7 +202,7 @@ func TestOSINTService_OpenAPIResponseDecoding(t *testing.T) {
 		case "/service/discord-userinfo":
 			_, _ = w.Write([]byte(`{"success":true,"data":{"id":"123456789012345678","username":"alice","global_name":"Alice","avatar_url":"https://example.com/d.png","banner_url":null,"creation_date":"2017-04-09 22:36:48 UTC","badges":["staff"]}}`))
 		case "/service/discord-username-history":
-			_, _ = w.Write([]byte(`{"success":true,"data":{"success":true,"message":"Found.","history":[{"name":["alice"],"time":["2026-01-01T00:00:00Z"]}],"lookups_left":9}}`))
+			_, _ = w.Write([]byte(`{"success":true,"data":{"success":true,"message":"Found.","history":[{"name":"alice","time":"2026-01-01T00:00:00Z"},{"name":["bob"],"time":["2026-01-02T00:00:00Z"]}],"lookups_left":9}}`))
 		case "/service/discord-to-roblox":
 			_, _ = w.Write([]byte(`{"success":true,"data":{"discord_id":"123456789012345678","roblox_id":"1","name":"builderman","displayName":"Builder","created":"2006-01-01T00:00:00Z","description":"profile","avatar":"https://example.com/r.png","badges":["Admin"],"groupCount":3,"cached":false,"disabled":true,"skipped":true,"results_found":0}}`))
 		case "/service/roblox-userinfo":
@@ -262,7 +262,7 @@ func TestOSINTService_OpenAPIResponseDecoding(t *testing.T) {
 	if err != nil {
 		t.Fatalf("DiscordUsernameHistory() error = %v", err)
 	}
-	if history.Data == nil || len(history.Data.History) != 1 || history.Data.History[0].Name[0] != "alice" || history.Data.LookupsLeft == nil {
+	if history.Data == nil || len(history.Data.History) != 2 || history.Data.History[0].Name[0] != "alice" || history.Data.History[1].Name[0] != "bob" || history.Data.LookupsLeft == nil {
 		t.Fatalf("unexpected history response: %#v", history.Data)
 	}
 

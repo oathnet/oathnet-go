@@ -1201,8 +1201,8 @@ type DiscordUsernameHistoryData struct {
 }
 
 type DiscordUsernameHistoryEntry struct {
-	Name []string `json:"name,omitempty"`
-	Time []string `json:"time,omitempty"`
+	Name FlexibleStringList `json:"name,omitempty"`
+	Time FlexibleStringList `json:"time,omitempty"`
 
 	// Legacy fields kept for source compatibility with older SDK users.
 	Username  string `json:"username,omitempty"`
