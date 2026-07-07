@@ -132,10 +132,8 @@ client, err := oathnet.NewClient("your-api-key",
 session, err := client.Search.InitSession("query")
 
 // Search breach database
-result, err := client.Search.Breach("query", &oathnet.BreachSearchOptions{
-    Page:   1,
-    Limit:  25,
-    DBName: "linkedin",  // Optional database filter
+result, err := client.Search.Breach("query", &oathnet.SearchOptions{
+    DBNames: "linkedin",  // Optional database filter
 })
 
 // Search stealer database
@@ -248,7 +246,7 @@ result, err := client.FileSearch.WaitForCompletion(
 )
 
 // Or use convenience method
-result, err := client.FileSearch.Search("api_key", &oathnet.FileSearchCreateOptions{
+result, err := client.FileSearch.Search("password", &oathnet.FileSearchCreateOptions{
     SearchMode: "literal",
     MaxMatches: 50,
 }, 60*time.Second)
@@ -258,11 +256,12 @@ result, err := client.FileSearch.Search("api_key", &oathnet.FileSearchCreateOpti
 
 ```go
 // Create export
-job, err := client.Exports.Create("docs", &oathnet.ExportCreateOptions{
-    Format: "csv", // "csv" or "jsonl"
+job, err := client.Exports.Create("breach", &oathnet.ExportCreateOptions{
+    Service: "breach",
+    Format: "jsonl",
     Limit:  1000,
     Fields: []string{"email", "domain"},
-    Search: map[string]interface{}{"query": "example.com"},
+    Search: map[string]interface{}{"q": "example.com"},
 })
 
 // Wait for completion
