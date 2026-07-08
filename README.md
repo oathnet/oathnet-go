@@ -96,7 +96,7 @@ export OATHNET_API_KEY=your-api-key
 - **V2 AI Filters**: Translate natural language into reusable structured filters
 
 ### OSINT Lookups
-- Discord (user info, username history, linked Roblox)
+- Discord (user info and username history)
 - Steam profiles
 - Xbox Live profiles
 - Roblox user info
@@ -157,9 +157,6 @@ discord, err := client.OSINT.DiscordUserinfo("discord_id")
 
 // Discord username history
 history, err := client.OSINT.DiscordUsernameHistory("discord_id")
-
-// Discord to Roblox
-roblox, err := client.OSINT.DiscordToRoblox("discord_id")
 
 // Roblox user (by username)
 robloxUser, err := client.OSINT.RobloxUserinfo(oathnet.RobloxUserinfoOptions{

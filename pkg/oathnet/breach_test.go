@@ -165,8 +165,8 @@ func TestBreachV2Service_SearchRequestConstruction(t *testing.T) {
 		t.Fatalf("Search() error = %v", err)
 	}
 
-	if gotMethod != http.MethodGet {
-		t.Fatalf("method = %s, want GET", gotMethod)
+	if gotMethod != http.MethodPost {
+		t.Fatalf("method = %s, want POST", gotMethod)
 	}
 	if gotPath != "/service/v2/breach/search" {
 		t.Fatalf("path = %s, want /service/v2/breach/search", gotPath)
@@ -174,12 +174,28 @@ func TestBreachV2Service_SearchRequestConstruction(t *testing.T) {
 	if gotAPIKey != "test-key" {
 		t.Fatalf("x-api-key = %q, want test-key", gotAPIKey)
 	}
-	if len(gotBody) != 0 {
-		t.Fatalf("GET body = %s, want empty", string(gotBody))
+	var gotBodyJSON map[string]interface{}
+	if err := json.Unmarshal(gotBody, &gotBodyJSON); err != nil {
+		t.Fatalf("Unmarshal request body error = %v; body=%s", err, string(gotBody))
+	}
+	wantBody := map[string]interface{}{
+		"q": "alice+tag@example.com",
+		"filter": map[string]interface{}{
+			"and": []interface{}{
+				map[string]interface{}{
+					"field":    "country",
+					"operator": "eq",
+					"value":    "US",
+				},
+			},
+		},
+		"filter_id": "0123456789abcdef01234567",
+	}
+	if !reflect.DeepEqual(gotBodyJSON, wantBody) {
+		t.Fatalf("body = %#v, want %#v", gotBodyJSON, wantBody)
 	}
 
 	wantQuery := url.Values{
-		"q":               {"alice+tag@example.com"},
 		"cursor":          {"cursor/with space"},
 		"page_size":       {"25"},
 		"sort":            {"-indexed_at"},
@@ -188,8 +204,6 @@ func TestBreachV2Service_SearchRequestConstruction(t *testing.T) {
 		"date_field":      {"indexed_at"},
 		"wildcard":        {"true"},
 		"logic":           {"and"},
-		"filter":          {`{"and":[{"field":"country","operator":"eq","value":"US"}]}`},
-		"filter_id":       {"0123456789abcdef01234567"},
 		"email[]":         {"alice+tag@example.com", "bob@example.com"},
 		"email_domain[]":  {"example.com"},
 		"domain[]":        {"app.example.com"},
@@ -226,7 +240,6 @@ func TestBreachV2Service_SearchRequestConstruction(t *testing.T) {
 		t.Fatalf("query = %#v, want %#v", gotQuery, wantQuery)
 	}
 	for _, encoded := range []string{
-		"q=alice%2Btag%40example.com",
 		"cursor=cursor%2Fwith+space",
 		"email%5B%5D=alice%2Btag%40example.com",
 		"fields%5B%5D=email",

@@ -1,6 +1,8 @@
 package oathnet
 
 import (
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -71,12 +73,22 @@ func TestStealerV2Service_Search(t *testing.T) {
 }
 
 func TestStealerV2Service_SearchRequestConstruction(t *testing.T) {
+	var gotMethod string
 	var gotPath string
 	var gotQuery url.Values
+	var gotBody map[string]interface{}
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotMethod = r.Method
 		gotPath = r.URL.EscapedPath()
 		gotQuery = r.URL.Query()
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("ReadAll() error = %v", err)
+		}
+		if err := json.Unmarshal(body, &gotBody); err != nil {
+			t.Fatalf("Unmarshal request body error = %v; body=%s", err, string(body))
+		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{
 			"success": true,
@@ -143,7 +155,6 @@ func TestStealerV2Service_SearchRequestConstruction(t *testing.T) {
 	}
 
 	wantQuery := url.Values{
-		"q":                         {"alice@example.com"},
 		"cursor":                    {"cursor/with space"},
 		"page_size":                 {"50"},
 		"sort":                      {"-indexed_at"},
@@ -154,8 +165,6 @@ func TestStealerV2Service_SearchRequestConstruction(t *testing.T) {
 		"has_log_id":                {"true"},
 		"wildcard":                  {"true"},
 		"logic":                     {"and"},
-		"filter":                    {`{"and":[{"field":"domain","operator":"eq","value":"example.com"}]}`},
-		"filter_id":                 {"0123456789abcdef01234567"},
 		"domain[]":                  {"example.com"},
 		"subdomain[]":               {"accounts.example.com"},
 		"username[]":                {"alice"},
@@ -177,8 +186,23 @@ func TestStealerV2Service_SearchRequestConstruction(t *testing.T) {
 	if gotPath != "/service/v2/stealer/search" {
 		t.Fatalf("path = %s, want /service/v2/stealer/search", gotPath)
 	}
+	if gotMethod != http.MethodPost {
+		t.Fatalf("method = %s, want POST", gotMethod)
+	}
 	if !reflect.DeepEqual(gotQuery, wantQuery) {
 		t.Fatalf("query = %#v, want %#v", gotQuery, wantQuery)
+	}
+	wantBody := map[string]interface{}{
+		"q": "alice@example.com",
+		"filter": map[string]interface{}{
+			"and": []interface{}{
+				map[string]interface{}{"field": "domain", "operator": "eq", "value": "example.com"},
+			},
+		},
+		"filter_id": "0123456789abcdef01234567",
+	}
+	if !reflect.DeepEqual(gotBody, wantBody) {
+		t.Fatalf("body = %#v, want %#v", gotBody, wantBody)
 	}
 	if resp == nil || !resp.Success || resp.Data == nil || resp.Data.NextCursor != "next-stealer" {
 		t.Fatalf("unexpected response: %#v", resp)

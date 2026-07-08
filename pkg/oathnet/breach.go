@@ -87,6 +87,10 @@ type BreachV2AutocompleteFieldsOptions struct {
 
 // Search searches V2 breach records with query parameters.
 func (s *BreachV2Service) Search(query string, opts *BreachV2SearchOptions) (*V2BreachSearchResponse, error) {
+	if breachSearchNeedsBody(opts) {
+		return s.searchPostFromOptions(query, opts)
+	}
+
 	params, err := buildBreachV2SearchParams(query, opts, true)
 	if err != nil {
 		return nil, err
@@ -113,6 +117,33 @@ func (s *BreachV2Service) SearchPost(body V2SearchPostBody, opts *BreachV2Search
 	var resp V2BreachSearchResponse
 	err = s.client.post(path, requestBody, &resp)
 	return &resp, err
+}
+
+func (s *BreachV2Service) searchPostFromOptions(query string, opts *BreachV2SearchOptions) (*V2BreachSearchResponse, error) {
+	params, err := buildBreachV2SearchParams("", opts, false)
+	if err != nil {
+		return nil, err
+	}
+	body := V2SearchPostBody{}
+	if query != "" {
+		body["q"] = query
+	}
+	if opts != nil {
+		if opts.Filter != nil {
+			body["filter"] = opts.Filter
+		}
+		if opts.FilterID != "" {
+			body["filter_id"] = opts.FilterID
+		}
+	}
+
+	var resp V2BreachSearchResponse
+	err = s.client.post(pathWithQuery(breachV2SearchPath, params), body, &resp)
+	return &resp, err
+}
+
+func breachSearchNeedsBody(opts *BreachV2SearchOptions) bool {
+	return opts != nil && (opts.Filter != nil || opts.FilterID != "")
 }
 
 // Autocomplete returns raw autocomplete values for supported breach fields.

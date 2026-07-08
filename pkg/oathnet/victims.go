@@ -152,6 +152,10 @@ type VictimRawOptions struct {
 
 // Search searches victim profiles.
 func (s *VictimsService) Search(query string, opts *VictimsSearchOptions) (*V2VictimsResponse, error) {
+	if victimsSearchNeedsBody(opts) {
+		return s.searchPostFromOptions(query, opts)
+	}
+
 	params, err := buildVictimsV2SearchParams(query, opts, true)
 	if err != nil {
 		return nil, err
@@ -164,6 +168,37 @@ func (s *VictimsService) Search(query string, opts *VictimsSearchOptions) (*V2Vi
 	}
 
 	return decodeV2VictimsResponse(rawResp)
+}
+
+func (s *VictimsService) searchPostFromOptions(query string, opts *VictimsSearchOptions) (*V2VictimsResponse, error) {
+	params, err := buildVictimsV2SearchParams("", opts, false)
+	if err != nil {
+		return nil, err
+	}
+	body := V2SearchPostBody{}
+	if query != "" {
+		body["q"] = query
+	}
+	if opts != nil {
+		if opts.Filter != nil {
+			body["filter"] = opts.Filter
+		}
+		if opts.FilterID != "" {
+			body["filter_id"] = opts.FilterID
+		}
+	}
+
+	var rawResp map[string]interface{}
+	err = s.client.post(pathWithQuery(victimsV2SearchPath, params), body, &rawResp)
+	if err != nil {
+		return nil, err
+	}
+
+	return decodeV2VictimsResponse(rawResp)
+}
+
+func victimsSearchNeedsBody(opts *VictimsSearchOptions) bool {
+	return opts != nil && (opts.Filter != nil || opts.FilterID != "")
 }
 
 // SearchPost searches victim profiles using a JSON body for filter/filter_id.

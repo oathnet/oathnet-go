@@ -126,11 +126,19 @@ func TestVictimsService_SearchRequestConstruction(t *testing.T) {
 	var gotMethod string
 	var gotPath string
 	var gotQuery url.Values
+	var gotBody map[string]interface{}
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotMethod = r.Method
 		gotPath = r.URL.EscapedPath()
 		gotQuery = r.URL.Query()
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("ReadAll() error = %v", err)
+		}
+		if err := json.Unmarshal(body, &gotBody); err != nil {
+			t.Fatalf("Unmarshal request body error = %v; body=%s", err, string(body))
+		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -201,14 +209,13 @@ func TestVictimsService_SearchRequestConstruction(t *testing.T) {
 		t.Fatalf("Search() error = %v", err)
 	}
 
-	if gotMethod != http.MethodGet {
-		t.Fatalf("method = %s, want GET", gotMethod)
+	if gotMethod != http.MethodPost {
+		t.Fatalf("method = %s, want POST", gotMethod)
 	}
 	if gotPath != "/service/v2/victims/search" {
 		t.Fatalf("path = %s, want /service/v2/victims/search", gotPath)
 	}
 	wantQuery := url.Values{
-		"q":                 {"example.com"},
 		"cursor":            {"victim cursor"},
 		"page_size":         {"50"},
 		"sort":              {"-indexed_at"},
@@ -217,8 +224,6 @@ func TestVictimsService_SearchRequestConstruction(t *testing.T) {
 		"date_field":        {"indexed_at"},
 		"wildcard":          {"true"},
 		"log_id":            {"log-123"},
-		"filter":            {`{"field":"service","operator":"eq","value":"discord"}`},
-		"filter_id":         {"0123456789abcdef01234567"},
 		"total_docs_min":    {"2"},
 		"total_docs_max":    {"20"},
 		"service_count_min": {"1"},
@@ -248,6 +253,14 @@ func TestVictimsService_SearchRequestConstruction(t *testing.T) {
 	}
 	if !reflect.DeepEqual(gotQuery, wantQuery) {
 		t.Fatalf("query = %#v, want %#v", gotQuery, wantQuery)
+	}
+	wantBody := map[string]interface{}{
+		"q":         "example.com",
+		"filter":    map[string]interface{}{"field": "service", "operator": "eq", "value": "discord"},
+		"filter_id": "0123456789abcdef01234567",
+	}
+	if !reflect.DeepEqual(gotBody, wantBody) {
+		t.Fatalf("body = %#v, want %#v", gotBody, wantBody)
 	}
 	if resp == nil || !resp.Success || resp.Data == nil || resp.Data.NextCursor != "next-victim" {
 		t.Fatalf("unexpected response: %#v", resp)

@@ -69,6 +69,8 @@ type InvestigationSearchOptions struct {
 	SearchID              string
 	Filter                interface{}
 	FilterID              string
+	Filters               V2InvestigationSectionFilters
+	Cursors               V2InvestigationCursors
 	FilterMode            string
 	Compact               bool
 	View                  string
@@ -150,6 +152,10 @@ type SubdomainOptions struct {
 
 // Search searches the V2 stealer database.
 func (s *StealerV2Service) Search(query string, opts *StealerSearchOptions) (*V2StealerResponse, error) {
+	if stealerSearchNeedsBody(opts) {
+		return s.searchPostFromOptions(query, opts)
+	}
+
 	params, err := buildStealerV2SearchParams(query, opts, true)
 	if err != nil {
 		return nil, err
@@ -178,6 +184,33 @@ func (s *StealerV2Service) SearchPost(body V2SearchPostBody, opts *StealerSearch
 	return &resp, err
 }
 
+func (s *StealerV2Service) searchPostFromOptions(query string, opts *StealerSearchOptions) (*V2StealerResponse, error) {
+	params, err := buildStealerV2SearchParams("", opts, false)
+	if err != nil {
+		return nil, err
+	}
+	body := V2SearchPostBody{}
+	if query != "" {
+		body["q"] = query
+	}
+	if opts != nil {
+		if opts.Filter != nil {
+			body["filter"] = opts.Filter
+		}
+		if opts.FilterID != "" {
+			body["filter_id"] = opts.FilterID
+		}
+	}
+
+	var resp V2StealerResponse
+	err = s.client.post(pathWithQuery(stealerV2SearchPath, params), body, &resp)
+	return &resp, err
+}
+
+func stealerSearchNeedsBody(opts *StealerSearchOptions) bool {
+	return opts != nil && (opts.Filter != nil || opts.FilterID != "")
+}
+
 // SearchStealerV2Post is an operation-id alias for SearchPost.
 func (s *StealerV2Service) SearchStealerV2Post(body V2SearchPostBody, opts *StealerSearchOptions) (*V2StealerResponse, error) {
 	return s.SearchPost(body, opts)
@@ -185,6 +218,9 @@ func (s *StealerV2Service) SearchStealerV2Post(body V2SearchPostBody, opts *Stea
 
 // InvestigationSearch searches the canonical V2 stealer investigation route.
 func (s *StealerV2Service) InvestigationSearch(query string, opts *InvestigationSearchOptions) (*V2InvestigationSearchResponse, error) {
+	if investigationSearchNeedsBody(opts) {
+		return s.InvestigationSearchPost(investigationBodyFromOptions(query, opts))
+	}
 	return s.investigationSearch(stealerV2InvestigationSearchPath, query, opts)
 }
 
@@ -196,6 +232,9 @@ func (s *StealerV2Service) InvestigationSearchPost(body *V2InvestigationSearchRe
 // InvestigationSearchAlias searches the legacy V2 investigation alias route.
 // Prefer InvestigationSearch for new integrations.
 func (s *StealerV2Service) InvestigationSearchAlias(query string, opts *InvestigationSearchOptions) (*V2InvestigationSearchResponse, error) {
+	if investigationSearchNeedsBody(opts) {
+		return s.InvestigationSearchAliasPost(investigationBodyFromOptions(query, opts))
+	}
 	return s.investigationSearch(investigationV2AliasPath, query, opts)
 }
 
@@ -203,6 +242,29 @@ func (s *StealerV2Service) InvestigationSearchAlias(query string, opts *Investig
 // Prefer InvestigationSearchPost for new integrations.
 func (s *StealerV2Service) InvestigationSearchAliasPost(body *V2InvestigationSearchRequest) (*V2InvestigationSearchResponse, error) {
 	return s.investigationSearchPost(investigationV2AliasPath, body)
+}
+
+func investigationSearchNeedsBody(opts *InvestigationSearchOptions) bool {
+	return opts != nil && (opts.Filters != nil || opts.Cursors != nil)
+}
+
+func investigationBodyFromOptions(query string, opts *InvestigationSearchOptions) *V2InvestigationSearchRequest {
+	body := &V2InvestigationSearchRequest{Q: query}
+	if opts == nil {
+		return body
+	}
+	body.Scope = opts.Scope
+	body.Include = opts.Include
+	body.FilterMode = opts.FilterMode
+	body.Compact = opts.Compact
+	body.PageSize = opts.PageSize
+	body.View = opts.View
+	body.SearchID = opts.SearchID
+	body.Filter = opts.Filter
+	body.FilterID = opts.FilterID
+	body.Filters = opts.Filters
+	body.Cursors = opts.Cursors
+	return body
 }
 
 func (s *StealerV2Service) investigationSearch(path, query string, opts *InvestigationSearchOptions) (*V2InvestigationSearchResponse, error) {
