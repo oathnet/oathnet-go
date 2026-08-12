@@ -1268,9 +1268,39 @@ type HoleheResponse struct {
 }
 
 type HoleheData struct {
-	Email   string        `json:"email"`
-	Domains []string      `json:"domains"`
-	Meta    *ResponseMeta `json:"_meta,omitempty"`
+	Email            string                 `json:"email"`
+	Domains          []string               `json:"domains"`
+	Partial          bool                   `json:"partial,omitempty"`
+	ProviderSummary  *HoleheProviderSummary `json:"provider_summary,omitempty"`
+	ProviderStatuses []HoleheProviderResult `json:"provider_statuses,omitempty"`
+	ProviderTiming   *HoleheProviderTiming  `json:"provider_timing,omitempty"`
+	Warning          string                 `json:"warning,omitempty"`
+	Meta             *ResponseMeta          `json:"_meta,omitempty"`
+}
+
+type HoleheProviderSummary struct {
+	Status    string `json:"status"`
+	Total     int    `json:"total"`
+	Completed int    `json:"completed"`
+	Failed    int    `json:"failed"`
+}
+
+type HoleheProviderResult struct {
+	Provider   string   `json:"provider"`
+	Status     string   `json:"status"`
+	DurationMS *float64 `json:"duration_ms,omitempty"`
+}
+
+type HoleheProviderTiming struct {
+	SampleSize       int      `json:"sample_size"`
+	AverageMS        *float64 `json:"average_ms"`
+	P50MS            *float64 `json:"p50_ms"`
+	P95MS            *float64 `json:"p95_ms"`
+	P99MS            *float64 `json:"p99_ms"`
+	MaxMS            *float64 `json:"max_ms"`
+	SweepMS          float64  `json:"sweep_ms"`
+	ModuleTimeoutMS  int      `json:"module_timeout_ms"`
+	OverallTimeoutMS int      `json:"overall_timeout_ms"`
 }
 
 type GHuntResponse struct {

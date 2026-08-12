@@ -208,7 +208,7 @@ func TestOSINTService_OpenAPIResponseDecoding(t *testing.T) {
 		case "/service/roblox-userinfo":
 			_, _ = w.Write([]byte(`{"success":true,"data":{"username":"builderman","Current Username":"builderman","Old Usernames":"None","Display Name":"Builder","user_id":"1","User ID":"1","Discord":"N/A","Join Date":"2006-01-01T00:00:00Z","Avatar URL":"https://example.com/r.png"}}`))
 		case "/service/holehe":
-			_, _ = w.Write([]byte(`{"success":true,"data":{"domains":["github.com","google.com"],"_meta":{"service":{"id":"holehe"}}}}`))
+			_, _ = w.Write([]byte(`{"success":true,"data":{"domains":["github.com","google.com"],"partial":true,"provider_summary":{"status":"partial","total":2,"completed":1,"failed":1},"provider_statuses":[{"provider":"alpha","status":"found","duration_ms":12.5},{"provider":"beta","status":"timeout","duration_ms":6001.2}],"provider_timing":{"sample_size":2,"average_ms":3006.85,"p50_ms":12.5,"p95_ms":6001.2,"p99_ms":6001.2,"max_ms":6001.2,"sweep_ms":6002,"module_timeout_ms":6000,"overall_timeout_ms":25000},"_meta":{"service":{"id":"holehe"}}}}`))
 		case "/service/ghunt":
 			_, _ = w.Write([]byte(`{"success":true,"data":{"status":"found","data":{"profile":{"Name":"Alice","Profile Picture":"https://example.com/g.png","Gaia ID":"gaia-1","Last Update":"2026-01-01"},"maps_reviews":"none","photos_url":"https://photos.example.com"},"_meta":{"service":{"id":"ghunt"}}},"errors":{"error":"","details":""}}`))
 		case "/service/extract-subdomain":
@@ -288,6 +288,9 @@ func TestOSINTService_OpenAPIResponseDecoding(t *testing.T) {
 	}
 	if holehe.Data == nil || len(holehe.Data.Domains) != 2 {
 		t.Fatalf("unexpected Holehe response: %#v", holehe.Data)
+	}
+	if !holehe.Data.Partial || holehe.Data.ProviderTiming == nil || holehe.Data.ProviderTiming.P99MS == nil || *holehe.Data.ProviderTiming.P99MS != 6001.2 {
+		t.Fatalf("unexpected Holehe provider timing: %#v", holehe.Data)
 	}
 
 	ghunt, err := client.OSINT.GHunt("person@example.com")
