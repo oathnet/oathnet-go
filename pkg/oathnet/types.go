@@ -1010,31 +1010,64 @@ type IPInfoResponse struct {
 }
 
 type IPInfoData struct {
-	Status        string        `json:"status,omitempty"`
-	Query         string        `json:"query,omitempty"`
-	Continent     string        `json:"continent,omitempty"`
-	ContinentCode string        `json:"continentCode,omitempty"`
-	Country       string        `json:"country,omitempty"`
-	CountryCode   string        `json:"countryCode,omitempty"`
-	Region        string        `json:"region,omitempty"`
-	RegionName    string        `json:"regionName,omitempty"`
-	City          string        `json:"city,omitempty"`
-	District      string        `json:"district,omitempty"`
-	Zip           string        `json:"zip,omitempty"`
-	Lat           float64       `json:"lat,omitempty"`
-	Lon           float64       `json:"lon,omitempty"`
-	Timezone      string        `json:"timezone,omitempty"`
-	Offset        int           `json:"offset,omitempty"`
-	Currency      string        `json:"currency,omitempty"`
-	ISP           string        `json:"isp,omitempty"`
-	Org           string        `json:"org,omitempty"`
-	AS            string        `json:"as,omitempty"`
-	ASName        string        `json:"asname,omitempty"`
-	Mobile        bool          `json:"mobile,omitempty"`
-	Proxy         bool          `json:"proxy,omitempty"`
-	Hosting       bool          `json:"hosting,omitempty"`
-	Reverse       string        `json:"reverse,omitempty"`
-	Meta          *ResponseMeta `json:"_meta,omitempty"`
+	Status           string                 `json:"status,omitempty"`
+	Query            string                 `json:"query,omitempty"`
+	Continent        string                 `json:"continent,omitempty"`
+	ContinentCode    string                 `json:"continentCode,omitempty"`
+	Country          string                 `json:"country,omitempty"`
+	CountryCode      string                 `json:"countryCode,omitempty"`
+	Region           string                 `json:"region,omitempty"`
+	RegionName       string                 `json:"regionName,omitempty"`
+	City             string                 `json:"city,omitempty"`
+	District         string                 `json:"district,omitempty"`
+	Zip              string                 `json:"zip,omitempty"`
+	Lat              float64                `json:"lat,omitempty"`
+	Lon              float64                `json:"lon,omitempty"`
+	Timezone         string                 `json:"timezone,omitempty"`
+	Offset           int                    `json:"offset,omitempty"`
+	Currency         string                 `json:"currency,omitempty"`
+	ISP              string                 `json:"isp,omitempty"`
+	Org              string                 `json:"org,omitempty"`
+	AS               string                 `json:"as,omitempty"`
+	ASName           string                 `json:"asname,omitempty"`
+	Mobile           bool                   `json:"mobile,omitempty"`
+	Proxy            bool                   `json:"proxy,omitempty"`
+	Hosting          bool                   `json:"hosting,omitempty"`
+	Reverse          string                 `json:"reverse,omitempty"`
+	Partial          bool                   `json:"partial,omitempty"`
+	Stale            bool                   `json:"stale,omitempty"`
+	FieldsAvailable  []string               `json:"fields_available,omitempty"`
+	FieldsMissing    []string               `json:"fields_missing,omitempty"`
+	ProviderSummary  *IPInfoProviderSummary `json:"provider_summary,omitempty"`
+	ProviderStatuses []IPInfoProviderResult `json:"provider_statuses,omitempty"`
+	ProviderTiming   *IPInfoProviderTiming  `json:"provider_timing,omitempty"`
+	Warning          string                 `json:"warning,omitempty"`
+	Meta             *ResponseMeta          `json:"_meta,omitempty"`
+}
+
+type IPInfoProviderSummary struct {
+	Status    string `json:"status"`
+	Total     int    `json:"total"`
+	Completed int    `json:"completed"`
+	Failed    int    `json:"failed"`
+}
+
+type IPInfoProviderResult struct {
+	Provider   string  `json:"provider"`
+	Status     string  `json:"status"`
+	DurationMS float64 `json:"duration_ms,omitempty"`
+}
+
+type IPInfoProviderTiming struct {
+	SampleSize       int      `json:"sample_size"`
+	AverageMS        *float64 `json:"average_ms"`
+	P50MS            *float64 `json:"p50_ms"`
+	P95MS            *float64 `json:"p95_ms"`
+	P99MS            *float64 `json:"p99_ms"`
+	MaxMS            *float64 `json:"max_ms"`
+	SweepMS          float64  `json:"sweep_ms"`
+	ModuleTimeoutMS  int      `json:"module_timeout_ms"`
+	OverallTimeoutMS int      `json:"overall_timeout_ms"`
 }
 
 type SteamProfileResponse struct {

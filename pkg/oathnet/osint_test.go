@@ -194,7 +194,7 @@ func TestOSINTService_OpenAPIResponseDecoding(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
 		case "/service/ip-info":
-			_, _ = w.Write([]byte(`{"success":true,"data":{"query":"8.8.8.8","as":"AS15169 Google LLC","asname":"GOOGLE","mobile":false,"_meta":{"service":{"id":"ip-info"}}}}`))
+			_, _ = w.Write([]byte(`{"success":true,"data":{"query":"8.8.8.8","as":"AS15169 Google LLC","asname":"GOOGLE","mobile":false,"partial":true,"fields_missing":["proxy"],"provider_summary":{"status":"partial","total":2,"completed":1,"failed":1},"provider_statuses":[{"provider":"primary","status":"error","duration_ms":50.25},{"provider":"fallback","status":"partial","duration_ms":20.5}],"provider_timing":{"sample_size":2,"average_ms":35.38,"p50_ms":20.5,"p95_ms":50.25,"p99_ms":50.25,"max_ms":50.25,"sweep_ms":71,"module_timeout_ms":10000,"overall_timeout_ms":30000},"_meta":{"service":{"id":"ip-info"}}}}`))
 		case "/service/steam":
 			_, _ = w.Write([]byte(`{"success":true,"data":{"username":"alice","id":"76561198000000000","avatar":"https://example.com/a.png","meta":{"raw_data":{"steamid":"76561198000000000","timecreated":123},"source":"steam_api"},"_meta":{"service":{"id":"steam"}}}}`))
 		case "/service/xbox":
@@ -230,7 +230,7 @@ func TestOSINTService_OpenAPIResponseDecoding(t *testing.T) {
 	if err != nil {
 		t.Fatalf("IPInfo() error = %v", err)
 	}
-	if ip.Data == nil || ip.Data.AS != "AS15169 Google LLC" || ip.Data.ASName != "GOOGLE" || ip.Data.Meta.Service.ID != "ip-info" {
+	if ip.Data == nil || ip.Data.AS != "AS15169 Google LLC" || ip.Data.ASName != "GOOGLE" || ip.Data.Meta.Service.ID != "ip-info" || !ip.Data.Partial || ip.Data.ProviderSummary == nil || ip.Data.ProviderSummary.Completed != 1 || ip.Data.ProviderTiming == nil || ip.Data.ProviderTiming.P99MS == nil || *ip.Data.ProviderTiming.P99MS != 50.25 {
 		t.Fatalf("unexpected IPInfo response: %#v", ip.Data)
 	}
 
