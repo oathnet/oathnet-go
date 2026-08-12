@@ -1077,11 +1077,16 @@ type SteamProfileResponse struct {
 }
 
 type SteamProfileData struct {
-	Username string            `json:"username,omitempty"`
-	ID       string            `json:"id,omitempty"`
-	Avatar   string            `json:"avatar,omitempty"`
-	Meta     *SteamProfileMeta `json:"meta,omitempty"`
-	APIMeta  *ResponseMeta     `json:"_meta,omitempty"`
+	Username         string                `json:"username,omitempty"`
+	ID               string                `json:"id,omitempty"`
+	Avatar           string                `json:"avatar,omitempty"`
+	Meta             *SteamProfileMeta     `json:"meta,omitempty"`
+	APIMeta          *ResponseMeta         `json:"_meta,omitempty"`
+	Partial          bool                  `json:"partial,omitempty"`
+	Warning          string                `json:"warning,omitempty"`
+	ProviderStatuses map[string]string     `json:"provider_statuses,omitempty"`
+	ProviderSummary  *SteamProviderSummary `json:"provider_summary,omitempty"`
+	ProviderTiming   *SteamProviderTiming  `json:"provider_timing,omitempty"`
 
 	// Legacy flat fields kept for source compatibility with older SDK users.
 	SteamID                  string `json:"steam_id,omitempty"`
@@ -1095,6 +1100,23 @@ type SteamProfileData struct {
 	LocCountryCode           string `json:"loc_country_code,omitempty"`
 	LocStateCode             string `json:"loc_state_code,omitempty"`
 	LocCityID                int    `json:"loc_city_id,omitempty"`
+}
+
+type SteamProviderSummary struct {
+	Status    string `json:"status"`
+	Total     int    `json:"total"`
+	Completed int    `json:"completed"`
+	Failed    int    `json:"failed"`
+}
+
+type SteamProviderTiming struct {
+	SampleSize      int      `json:"sample_size"`
+	AverageMS       *float64 `json:"average_ms"`
+	P95MS           *float64 `json:"p95_ms"`
+	P99MS           *float64 `json:"p99_ms"`
+	MaxMS           *float64 `json:"max_ms"`
+	SweepMS         *float64 `json:"sweep_ms"`
+	ModuleTimeoutMS *int     `json:"module_timeout_ms"`
 }
 
 type SteamProfileMeta struct {
