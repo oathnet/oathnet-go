@@ -206,7 +206,7 @@ func TestOSINTService_OpenAPIResponseDecoding(t *testing.T) {
 		case "/service/discord-to-roblox":
 			_, _ = w.Write([]byte(`{"success":true,"data":{"discord_id":"123456789012345678","roblox_id":"1","name":"builderman","displayName":"Builder","created":"2006-01-01T00:00:00Z","description":"profile","avatar":"https://example.com/r.png","badges":["Admin"],"groupCount":3,"cached":false,"disabled":true,"skipped":true,"results_found":0}}`))
 		case "/service/roblox-userinfo":
-			_, _ = w.Write([]byte(`{"success":true,"data":{"username":"builderman","Current Username":"builderman","Old Usernames":"None","Display Name":"Builder","user_id":"1","User ID":"1","Discord":"N/A","Join Date":"2006-01-01T00:00:00Z","Avatar URL":"https://example.com/r.png"}}`))
+			_, _ = w.Write([]byte(`{"success":true,"data":{"username":"builderman","Current Username":"builderman","Old Usernames":"None","Display Name":"Builder","user_id":"1","User ID":"1","Discord":"N/A","Join Date":"2006-01-01T00:00:00Z","Avatar URL":"https://example.com/r.png","partial":true,"warning":"optional provider unavailable","provider_statuses":{"roblox":"found","username_history":"unknown"},"provider_summary":{"status":"partial","total":2,"completed":1,"failed":1},"provider_timing":{"sample_size":2,"average_ms":55,"p95_ms":100,"p99_ms":100,"max_ms":100,"sweep_ms":105,"module_timeout_ms":12000}}}`))
 		case "/service/holehe":
 			_, _ = w.Write([]byte(`{"success":true,"data":{"domains":["github.com","google.com"],"partial":true,"provider_summary":{"status":"partial","total":2,"completed":1,"failed":1},"provider_statuses":[{"provider":"alpha","status":"found","duration_ms":12.5},{"provider":"beta","status":"timeout","duration_ms":6001.2}],"provider_timing":{"sample_size":2,"average_ms":3006.85,"p50_ms":12.5,"p95_ms":6001.2,"p99_ms":6001.2,"max_ms":6001.2,"sweep_ms":6002,"module_timeout_ms":6000,"overall_timeout_ms":25000},"_meta":{"service":{"id":"holehe"}}}}`))
 		case "/service/ghunt":
@@ -278,7 +278,7 @@ func TestOSINTService_OpenAPIResponseDecoding(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RobloxUserinfo() error = %v", err)
 	}
-	if roblox.Data == nil || roblox.Data.CurrentUsername != "builderman" || roblox.Data.UserIDAlt != "1" {
+	if roblox.Data == nil || roblox.Data.CurrentUsername != "builderman" || roblox.Data.UserIDAlt != "1" || !roblox.Data.Partial || roblox.Data.ProviderStatuses["username_history"] != "unknown" || roblox.Data.ProviderSummary == nil || roblox.Data.ProviderSummary.Failed != 1 || roblox.Data.ProviderTiming == nil || roblox.Data.ProviderTiming.P99MS == nil || *roblox.Data.ProviderTiming.P99MS != 100 {
 		t.Fatalf("unexpected Roblox response: %#v", roblox.Data)
 	}
 

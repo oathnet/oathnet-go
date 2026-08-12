@@ -1298,22 +1298,44 @@ type RobloxUserResponse struct {
 }
 
 type RobloxUserData struct {
-	Username        string        `json:"username,omitempty"`
-	CurrentUsername string        `json:"Current Username,omitempty"`
-	OldUsernames    string        `json:"Old Usernames,omitempty"`
-	DisplayName     string        `json:"Display Name,omitempty"`
-	UserID          string        `json:"user_id,omitempty"`
-	UserIDAlt       string        `json:"User ID,omitempty"`
-	Discord         string        `json:"Discord,omitempty"`
-	JoinDate        string        `json:"Join Date,omitempty"`
-	AvatarURL       string        `json:"Avatar URL,omitempty"`
-	Meta            *ResponseMeta `json:"_meta,omitempty"`
+	Username         string                 `json:"username,omitempty"`
+	CurrentUsername  string                 `json:"Current Username,omitempty"`
+	OldUsernames     string                 `json:"Old Usernames,omitempty"`
+	DisplayName      string                 `json:"Display Name,omitempty"`
+	UserID           string                 `json:"user_id,omitempty"`
+	UserIDAlt        string                 `json:"User ID,omitempty"`
+	Discord          string                 `json:"Discord,omitempty"`
+	JoinDate         string                 `json:"Join Date,omitempty"`
+	AvatarURL        string                 `json:"Avatar URL,omitempty"`
+	Meta             *ResponseMeta          `json:"_meta,omitempty"`
+	Partial          bool                   `json:"partial,omitempty"`
+	Warning          string                 `json:"warning,omitempty"`
+	ProviderStatuses map[string]string      `json:"provider_statuses,omitempty"`
+	ProviderSummary  *RobloxProviderSummary `json:"provider_summary,omitempty"`
+	ProviderTiming   *RobloxProviderTiming  `json:"provider_timing,omitempty"`
 
 	// Legacy fields kept for source compatibility with older SDK users.
 	Description      string `json:"description,omitempty"`
 	Created          string `json:"created,omitempty"`
 	IsBanned         bool   `json:"is_banned,omitempty"`
 	HasVerifiedBadge bool   `json:"has_verified_badge,omitempty"`
+}
+
+type RobloxProviderSummary struct {
+	Status    string `json:"status"`
+	Total     int    `json:"total"`
+	Completed int    `json:"completed"`
+	Failed    int    `json:"failed"`
+}
+
+type RobloxProviderTiming struct {
+	SampleSize      int      `json:"sample_size"`
+	AverageMS       *float64 `json:"average_ms"`
+	P95MS           *float64 `json:"p95_ms"`
+	P99MS           *float64 `json:"p99_ms"`
+	MaxMS           *float64 `json:"max_ms"`
+	SweepMS         *float64 `json:"sweep_ms"`
+	ModuleTimeoutMS *int     `json:"module_timeout_ms"`
 }
 
 type HoleheResponse struct {
