@@ -198,7 +198,7 @@ func TestOSINTService_OpenAPIResponseDecoding(t *testing.T) {
 		case "/service/steam":
 			_, _ = w.Write([]byte(`{"success":true,"data":{"username":"alice","id":"76561198000000000","avatar":"https://example.com/a.png","meta":{"raw_data":{"steamid":"76561198000000000","timecreated":123},"source":"steam_api"},"_meta":{"service":{"id":"steam"}}}}`))
 		case "/service/xbox":
-			_, _ = w.Write([]byte(`{"success":true,"data":{"username":"alice","id":"xuid-1","avatar":"https://example.com/x.png","meta":{"id":"xuid-1","meta":{"gamerscore":"1234","xboxonerep":"GoodPlayer"},"scraper_data":{"games_played":2,"game_history":[{"title":"Halo","scoreDetails":{"achieved":10,"total":20}}]}}}}`))
+			_, _ = w.Write([]byte(`{"success":true,"data":{"username":"alice","id":"xuid-1","avatar":"https://example.com/x.png","partial":true,"warning":"fallback provider","provider_statuses":{"playerdb":"unknown","scraper":"found"},"provider_summary":{"status":"partial","total":2,"completed":1,"failed":1},"provider_timing":{"sample_size":2,"average_ms":40,"p95_ms":70,"p99_ms":70,"max_ms":70,"sweep_ms":72,"module_timeout_ms":12000},"meta":{"id":"xuid-1","meta":{"gamerscore":"1234","xboxonerep":"GoodPlayer"},"scraper_data":{"games_played":2,"game_history":[{"title":"Halo","scoreDetails":{"achieved":10,"total":20}}]}}}}`))
 		case "/service/discord-userinfo":
 			_, _ = w.Write([]byte(`{"success":true,"data":{"id":"123456789012345678","username":"alice","global_name":"Alice","avatar_url":"https://example.com/d.png","banner_url":null,"creation_date":"2017-04-09 22:36:48 UTC","badges":["staff"]}}`))
 		case "/service/discord-username-history":
@@ -246,7 +246,7 @@ func TestOSINTService_OpenAPIResponseDecoding(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Xbox() error = %v", err)
 	}
-	if xbox.Data == nil || xbox.Data.Meta == nil || xbox.Data.Meta.ScraperData.GameHistory[0].ScoreDetails.Total != 20 {
+	if xbox.Data == nil || xbox.Data.Meta == nil || xbox.Data.Meta.ScraperData.GameHistory[0].ScoreDetails.Total != 20 || !xbox.Data.Partial || xbox.Data.ProviderStatuses["scraper"] != "found" || xbox.Data.ProviderSummary == nil || xbox.Data.ProviderSummary.Completed != 1 || xbox.Data.ProviderTiming == nil || xbox.Data.ProviderTiming.P99MS == nil || *xbox.Data.ProviderTiming.P99MS != 70 {
 		t.Fatalf("unexpected Xbox response: %#v", xbox.Data)
 	}
 

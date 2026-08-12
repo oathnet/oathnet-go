@@ -1128,11 +1128,16 @@ type XboxProfileResponse struct {
 }
 
 type XboxProfileData struct {
-	Username string           `json:"username,omitempty"`
-	ID       string           `json:"id,omitempty"`
-	Avatar   string           `json:"avatar,omitempty"`
-	Meta     *XboxProfileMeta `json:"meta,omitempty"`
-	APIMeta  *ResponseMeta    `json:"_meta,omitempty"`
+	Username         string               `json:"username,omitempty"`
+	ID               string               `json:"id,omitempty"`
+	Avatar           string               `json:"avatar,omitempty"`
+	Meta             *XboxProfileMeta     `json:"meta,omitempty"`
+	APIMeta          *ResponseMeta        `json:"_meta,omitempty"`
+	Partial          bool                 `json:"partial,omitempty"`
+	Warning          string               `json:"warning,omitempty"`
+	ProviderStatuses map[string]string    `json:"provider_statuses,omitempty"`
+	ProviderSummary  *XboxProviderSummary `json:"provider_summary,omitempty"`
+	ProviderTiming   *XboxProviderTiming  `json:"provider_timing,omitempty"`
 
 	// Legacy flat fields kept for source compatibility with older SDK users.
 	XUID        string `json:"xuid,omitempty"`
@@ -1142,6 +1147,23 @@ type XboxProfileData struct {
 	Bio         string `json:"bio,omitempty"`
 	Location    string `json:"location,omitempty"`
 	RealName    string `json:"real_name,omitempty"`
+}
+
+type XboxProviderSummary struct {
+	Status    string `json:"status"`
+	Total     int    `json:"total"`
+	Completed int    `json:"completed"`
+	Failed    int    `json:"failed"`
+}
+
+type XboxProviderTiming struct {
+	SampleSize      int      `json:"sample_size"`
+	AverageMS       *float64 `json:"average_ms"`
+	P95MS           *float64 `json:"p95_ms"`
+	P99MS           *float64 `json:"p99_ms"`
+	MaxMS           *float64 `json:"max_ms"`
+	SweepMS         *float64 `json:"sweep_ms"`
+	ModuleTimeoutMS *int     `json:"module_timeout_ms"`
 }
 
 type XboxProfileMeta struct {
